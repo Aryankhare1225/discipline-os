@@ -242,7 +242,7 @@
 </div>
 
 <div class="panel active" id="panel-today">
-  <div class="section-title">Daily Checks &mdash; need &ge;4 for productive day</div>
+  <div class="section-title">Daily Checks &mdash; need &ge;6 for productive day</div>
   <div class="checklist" id="checklist"></div>
   <!-- SLEEP LOGGING -->
   <div class="divider"></div>
@@ -485,8 +485,8 @@ function tomorrowKey() {
   return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
 }
 function getTodayEntry() { return state.days[todayKey()] || {checks:{}, diary:{}, ts:null}; }
-function isProductive(e) { return e && e.checks && Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length >= 4; }
-function isPartial(e)    { var n = e && e.checks ? Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length : 0; return n>=1 && n<4; }
+function isProductive(e) { return e && e.checks && Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length >= 6; }
+function isPartial(e)    { var n = e && e.checks ? Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length : 0; return n>=1 && n<6; }
 function countProd()     { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(isProductive).length; }
 function countNoSugar()  { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.nosugar; }).length; }
 function countNoPorn()   { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.noporn; }).length; }
@@ -1003,7 +1003,7 @@ function renderGoals() {
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">💪</span><span class="goal-title">Body Fat below 3%</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+(state.goals.bodyfat||0)+'%"></div></div><div class="goal-note">See Body tab for full tracking  <button onclick="switchTab(\'body\')" style="'+btnStyle+'">Open Body Tab</button></div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍔</span><span class="goal-title">No Junk Food</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noJunkDays/90*100,100)+'%"></div></div><div class="goal-note">'+noJunkDays+' junk-free days — no ultra-processed food, no fast food</div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🏃</span><span class="goal-title">30 min Run</span><span class="goal-status '+(runDays>=90?'done':'active')+'">'+(runDays>=90?'Done':'Active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(runDays/90*100,100)+'%"></div></div><div class="goal-note">'+runDays+' run days — target: 90 days of 30 min runs (check Workout daily)</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">Daily Measures (need 4/'+CHECKS.length+')</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+c.name+'</span>';}).join('')+'</div></div>';
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">Daily Measures (need 6/'+CHECKS.length+')</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+c.name+'</span>';}).join('')+'</div></div>';
 }
 
 // ── BODY TAB ──
@@ -1370,8 +1370,8 @@ function scheduleReminders() {
       sendNotification('Log your day Aryan!', doneCount + '/8 checks done. Fill your diary before you sleep.');
     }
     // 10:00 PM — final nudge
-    if (h === 22 && m === 0 && doneCount < 4) {
-      sendNotification('Still time!', 'Only ' + doneCount + '/8 checks. Need 4 for a productive day.');
+    if (h === 22 && m === 0 && doneCount < 6) {
+      sendNotification('Still time!', 'Only ' + doneCount + '/8 checks. Need 6 for a productive day.');
     }
   }, 60000);
 }

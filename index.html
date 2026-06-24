@@ -229,6 +229,7 @@
 
 <div id="sleepDisplay"></div>
 <div id="frontTodoArea"></div>
+<div id="frontMoneyArea"></div>
 <div class="goals-grid" id="miniGoals"></div>
 
 <div class="tabs">
@@ -237,6 +238,7 @@
   <button class="tab" onclick="switchTab('goals')">Goals</button>
   <button class="tab" onclick="switchTab('body')">Body</button>
   <button class="tab" onclick="switchTab('tapan')">Tapan</button>
+  <button class="tab" onclick="switchTab('money')">Money</button>
   <button class="tab" onclick="switchTab('private')">&#128274;</button>
   <button class="tab" onclick="switchTab('history')">History</button>
 </div>
@@ -280,8 +282,6 @@
     <div class="diary-field"><label class="diary-label">&#128197; Plan for Tomorrow</label><textarea class="diary-input" id="d-plan" rows="2" placeholder="Top 3 priorities..."></textarea></div>
   </div>
   <button class="btn-save" id="saveBtn" onclick="saveToday()">Log Today</button>
-  <button class="btn-secondary" onclick="exportData()">&#8595; Export All Data (JSON)</button>
-  <button class="btn-gcal" onclick="showGCalInfo()">&#128197; Connect Google Calendar &mdash; wire up tonight</button>
   <div class="divider"></div>
   <div class="section-title">To-Do List</div>
   <div id="todoInputArea">
@@ -320,6 +320,10 @@
 <div class="panel" id="panel-tapan">
   <div class="section-title">Tapan Log — Road to USA</div>
   <div id="tapanContent"></div>
+</div>
+
+<div class="panel" id="panel-money">
+  <div id="moneyContent"></div>
 </div>
 
 <div class="panel" id="panel-private">
@@ -473,6 +477,8 @@ if (!state.tapanLog)  state.tapanLog  = [];
 if (!state.todos)     state.todos     = {};
 if (!state.sleep)     state.sleep     = {};
 if (!state.private)   state.private   = {};  // encrypted-ish, PIN protected
+if (!state.expenses)  state.expenses  = {};
+if (!state.budgets)   state.budgets   = { rent: 15000, electricity: 1500, food: 8000, maid: 2000, laundry: 1000, commute: 2000, cafe: 2000, recharge: 500, shopping: 3000, other: 2000 };
 state.pin = '1225';
 saveState(state);
 
@@ -1216,20 +1222,252 @@ function renderHistory(){
   }).join('');
 }
 
-function exportData(){
-  var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='aryan-tracker-'+todayKey()+'.json'; a.click();
-  showToast('Exported!');
+var EXPENSE_CATEGORIES = [
+  { id: 'rent',        label: 'Rent',        emoji: '🏠', color: '#e05252' },
+  { id: 'electricity', label: 'Electricity', emoji: '⚡', color: '#f0a500' },
+  { id: 'food',        label: 'Food',        emoji: '🥗', color: '#4caf7d' },
+  { id: 'maid',        label: 'Maid',        emoji: '🧹', color: '#7c8db0' },
+  { id: 'laundry',     label: 'Laundry',     emoji: '👕', color: '#7c8db0' },
+  { id: 'commute',     label: 'Commute',     emoji: '🚗', color: '#c9a84c' },
+  { id: 'cafe',        label: 'Cafe',        emoji: '☕', color: '#a0714f' },
+  { id: 'recharge',    label: 'Recharge',    emoji: '📱', color: '#5c8dd6' },
+  { id: 'shopping',    label: 'Shopping',    emoji: '🛍️', color: '#b06abf' },
+  { id: 'other',       label: 'Other',       emoji: '📦', color: '#666' },
+];
+
+function currentMonthKey() {
+  var n = new Date();
+  return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0');
 }
-function showGCalInfo(){showToast('Google Calendar hook ready!');}
+
+function getMonthExpenses(monthKey) {
+  if (!state.expenses) return [];
+  var all = [];
+  Object.keys(state.expenses).forEach(function(dateKey) {
+    if (dateKey.indexOf(monthKey) === 0) {
+      var dayEntries = state.expenses[dateKey] || [];
+      dayEntries.forEach(function(e) { all.push(e); });
+    }
+  });
+  return all;
+}
+
+function getCategoryTotal(expenses, catId) {
+  return expenses
+    .filter(function(e) { return e.cat === catId; })
+    .reduce(function(sum, e) { return sum + (e.amount || 0); }, 0);
+}
+
+function addExpense() {
+  var cat    = document.getElementById('expCat');
+  var amount = document.getElementById('expAmount');
+  var note   = document.getElementById('expNote');
+  if (!cat || !amount || !amount.value || isNaN(+amount.value) || +amount.value <= 0) {
+    showToast('Enter a valid amount');
+    return;
+  }
+  var k = todayKey();
+  if (!state.expenses[k]) state.expenses[k] = [];
+  var now = new Date();
+  state.expenses[k].push({
+    cat:    cat.value,
+    amount: +amount.value,
+    note:   note ? note.value.trim() : '',
+    time:   now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  });
+  amount.value = '';
+  if (note) note.value = '';
+  saveState(state);
+  renderMoney();
+  renderFrontMoney();
+  showToast('Expense logged');
+}
+
+function deleteExpense(dateKey, idx) {
+  if (!state.expenses[dateKey]) return;
+  state.expenses[dateKey].splice(idx, 1);
+  saveState(state);
+  renderMoney();
+  renderFrontMoney();
+}
+
+function saveBudget(catId) {
+  var inp = document.getElementById('budget-' + catId);
+  if (!inp || isNaN(+inp.value)) return;
+  state.budgets[catId] = +inp.value;
+  saveState(state);
+  renderMoney();
+  showToast('Budget updated');
+}
+
+function renderFrontMoney() {
+  var el = document.getElementById('frontMoneyArea');
+  if (!el) return;
+  var mKey     = currentMonthKey();
+  var expenses = getMonthExpenses(mKey);
+  var total    = expenses.reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+  var totalBudget = Object.keys(state.budgets || {}).reduce(function(s, k) { return s + (state.budgets[k] || 0); }, 0);
+  var pct = totalBudget ? Math.min(total / totalBudget * 100, 100) : 0;
+  var color = pct > 90 ? '#e05252' : pct > 70 ? '#f0a500' : '#4caf7d';
+  if (!total) { el.innerHTML = ''; return; }
+  el.innerHTML =
+    '<div style="margin:8px 40px 0;max-width:820px;margin-left:auto;margin-right:auto;">' +
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="switchTab(\'money\')">' +
+        '<span style="font-size:20px;">💰</span>' +
+        '<div style="flex:1;">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
+            '<span style="font-size:12px;font-weight:600;">This Month</span>' +
+            '<span style="font-family:var(--mono);font-size:12px;color:' + color + ';">Rs ' + total.toLocaleString('en-IN') + ' / ' + totalBudget.toLocaleString('en-IN') + '</span>' +
+          '</div>' +
+          '<div style="background:var(--border);border-radius:3px;height:4px;">' +
+            '<div style="height:4px;background:' + color + ';border-radius:3px;width:' + pct + '%;transition:width .5s;"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderMoney() {
+  var el = document.getElementById('moneyContent');
+  if (!el) return;
+
+  var mKey     = currentMonthKey();
+  var expenses = getMonthExpenses(mKey);
+  var total    = expenses.reduce(function(s, e) { return s + (e.amount || 0); }, 0);
+  var totalBudget = Object.keys(state.budgets || {}).reduce(function(s, k) { return s + (state.budgets[k] || 0); }, 0);
+  var remaining = totalBudget - total;
+  var overallPct = totalBudget ? Math.min(total / totalBudget * 100, 100) : 0;
+  var overallColor = overallPct > 90 ? '#e05252' : overallPct > 70 ? '#f0a500' : 'var(--gold)';
+
+  var todayExp = state.expenses[todayKey()] || [];
+
+  var html =
+    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
+      '<div class="section-title" style="margin-bottom:10px;">Log Expense</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="catButtons">' +
+        EXPENSE_CATEGORIES.map(function(c) {
+          return '<button onclick="selectCat(\'' + c.id + '\')" id="catBtn-' + c.id + '" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;">' + c.emoji + ' ' + c.label + '</button>';
+        }).join('') +
+      '</div>' +
+      '<input type="hidden" id="expCat" value="food">' +
+      '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+        '<div style="position:relative;flex:1;">' +
+          '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;">Rs</span>' +
+          '<input id="expAmount" type="number" placeholder="Amount" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px 10px 30px;outline:none;" onkeydown="if(event.key===\'Enter\')addExpense()">' +
+        '</div>' +
+        '<input id="expNote" type="text" placeholder="Note (optional)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">' +
+      '</div>' +
+      '<button onclick="addExpense()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">ADD EXPENSE</button>' +
+    '</div>' +
+
+    '<div class="goal-card" style="margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        '<span style="font-size:13px;font-weight:600;">Month Overview</span>' +
+        '<span style="font-family:var(--mono);font-size:12px;color:' + overallColor + ';">Rs ' + total.toLocaleString('en-IN') + '</span>' +
+      '</div>' +
+      '<div style="background:var(--border);border-radius:4px;height:6px;margin-bottom:4px;">' +
+        '<div style="height:6px;background:' + overallColor + ';border-radius:4px;width:' + overallPct + '%;transition:width .5s;"></div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:14px;">' +
+        '<span>Budget: Rs ' + totalBudget.toLocaleString('en-IN') + '</span>' +
+        '<span style="color:' + (remaining < 0 ? '#e05252' : 'var(--success)') + ';">' + (remaining < 0 ? 'Over by Rs ' + Math.abs(remaining).toLocaleString('en-IN') : 'Rs ' + remaining.toLocaleString('en-IN') + ' left') + '</span>' +
+      '</div>' +
+      EXPENSE_CATEGORIES.map(function(c) {
+        var spent  = getCategoryTotal(expenses, c.id);
+        var budget = (state.budgets || {})[c.id] || 0;
+        var pct    = budget ? Math.min(spent / budget * 100, 100) : (spent ? 100 : 0);
+        var col    = pct > 90 ? '#e05252' : pct > 70 ? '#f0a500' : c.color;
+        if (!spent && !budget) return '';
+        return '<div style="margin-bottom:10px;">' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">' +
+            '<span style="font-size:11px;">' + c.emoji + ' ' + c.label + '</span>' +
+            '<span style="font-family:var(--mono);font-size:11px;color:' + col + ';">Rs ' + spent.toLocaleString('en-IN') + (budget ? ' / ' + budget.toLocaleString('en-IN') : '') + '</span>' +
+          '</div>' +
+          '<div style="background:var(--border);border-radius:3px;height:4px;">' +
+            '<div style="height:4px;background:' + col + ';border-radius:3px;width:' + pct + '%;transition:width .5s;"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('') +
+    '</div>' +
+
+    (todayExp.length ? 
+      '<div class="goal-card" style="margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">Today\'s Expenses</div>' +
+        todayExp.map(function(e, i) {
+          var cat = EXPENSE_CATEGORIES.filter(function(c){ return c.id === e.cat; })[0] || { emoji: '📦', label: e.cat };
+          return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">' +
+            '<span style="font-size:16px;">' + cat.emoji + '</span>' +
+            '<div style="flex:1;">' +
+              '<div style="font-size:12px;font-weight:500;">' + cat.label + (e.note ? ' — ' + e.note : '') + '</div>' +
+              '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);">' + e.time + '</div>' +
+            '</div>' +
+            '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + (e.amount || 0).toLocaleString('en-IN') + '</span>' +
+            '<button onclick="deleteExpense(\'' + todayKey() + '\',' + i + ')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">x</button>' +
+          '</div>';
+        }).join('') +
+        '<div style="display:flex;justify-content:space-between;padding-top:8px;">' +
+          '<span style="font-size:11px;color:var(--muted);">Today total</span>' +
+          '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + todayExp.reduce(function(s,e){return s+(e.amount||0);},0).toLocaleString('en-IN') + '</span>' +
+        '</div>' +
+      '</div>' 
+    : '') +
+
+    '<div class="goal-card" style="margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:6px;" onclick="toggleBudgetSettings()">' +
+        '<span style="font-size:13px;font-weight:600;">Monthly Budgets</span>' +
+        '<span id="budgetToggle" style="color:var(--gold);font-size:18px;">+</span>' +
+      '</div>' +
+      '<div id="budgetSettings" style="display:none;">' +
+        EXPENSE_CATEGORIES.map(function(c) {
+          var b = (state.budgets || {})[c.id] || 0;
+          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+            '<span style="width:100px;font-size:12px;">' + c.emoji + ' ' + c.label + '</span>' +
+            '<div style="position:relative;flex:1;">' +
+              '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;">Rs</span>' +
+              '<input id="budget-' + c.id + '" type="number" value="' + b + '" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 8px 8px 28px;outline:none;">' +
+            '</div>' +
+            '<button onclick="saveBudget(\'' + c.id + '\')" style="padding:8px 10px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;font-size:11px;cursor:pointer;">Save</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+  el.innerHTML = html;
+  selectCat('food');
+}
+
+function selectCat(id) {
+  var hiddenInput = document.getElementById('expCat');
+  if (hiddenInput) hiddenInput.value = id;
+  EXPENSE_CATEGORIES.forEach(function(c) {
+    var btn = document.getElementById('catBtn-' + c.id);
+    if (!btn) return;
+    if (c.id === id) {
+      btn.style.background = 'var(--gold)';
+      btn.style.color = '#000';
+      btn.style.borderColor = 'var(--gold)';
+    } else {
+      btn.style.background = 'var(--card)';
+      btn.style.color = 'var(--text)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  });
+}
+
+function toggleBudgetSettings() {
+  var d = document.getElementById('budgetSettings');
+  var t = document.getElementById('budgetToggle');
+  if (!d) return;
+  if (d.style.display === 'none') { d.style.display = 'block'; t.textContent = '-'; }
+  else { d.style.display = 'none'; t.textContent = '+'; }
+}
 
 function switchTab(id){
   if(id==='private'){
     if(!PIN_UNLOCKED){ openPinOverlay(); return; }
     renderPrivate();
   }
-  var allTabs=['today','calendar','goals','body','tapan','private','history'];
+  var allTabs=['today','calendar','goals','body','tapan','money','private','history'];
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',allTabs[i]===id);});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   var panel=document.getElementById('panel-'+id);
@@ -1238,6 +1476,7 @@ function switchTab(id){
   if(id==='goals')    renderGoals();
   if(id==='body')     renderBody();
   if(id==='tapan')    renderTapan();
+  if(id==='money')    renderMoney();
   if(id==='history')  renderHistory();
 }
 
@@ -1314,7 +1553,7 @@ function signOut() {
 
 function renderAll() {
   renderHero(); renderMiniGoals(); renderChecklist();
-  loadSleepForm(); renderSleepDisplay(); renderTodoWidget(); renderFrontTodo();
+  loadSleepForm(); renderSleepDisplay(); renderTodoWidget(); renderFrontTodo(); renderFrontMoney();
 }
 
 function requestNotificationPermission() {
@@ -1400,6 +1639,7 @@ loadSleepForm();
 renderSleepDisplay();
 renderTodoWidget();
 renderFrontTodo();
+renderFrontMoney();
 requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';
 </script>

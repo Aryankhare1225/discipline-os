@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aryan Khare — Discipline OS</title>
+<link rel="manifest" href="manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
   :root {
@@ -678,6 +679,26 @@ function renderPrivate() {
             '<button onclick="adjFap(1)" style="width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;cursor:pointer;">+</button>' +
           '</div>' +
         '</div>' +
+        '<div>' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Junk / Sugar consumed</label>' +
+            '<span id="junkCount" style="font-family:var(--mono);font-size:13px;color:var(--gold);">' + (priv.junk ? priv.junk.length : 0) + ' entries</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+            '<input id="junkInput" type="text" placeholder="e.g. 2 biscuits, chai with sugar, mango juice" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
+            '<button onclick="addJunk()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">ADD</button>' +
+          '</div>' +
+          (priv.junk && priv.junk.length ? 
+            '<div style="max-height:120px;overflow-y:auto;">' +
+              priv.junk.map(function(j, i) {
+                return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);">' +
+                  '<span style="color:var(--text);">🍩 ' + j.text + '</span>' +
+                  '<span style="color:var(--muted);font-family:var(--mono);font-size:9px;">' + j.time + '</span>' +
+                '</div>';
+              }).join('') +
+            '</div>' 
+          : '<div style="font-size:11px;color:var(--muted);">No junk logged today. Keep it up.</div>') +
+        '</div>' +
       '</div>' +
     '</div>' +
     '<div class="goal-card" style="margin-bottom:14px;">' +
@@ -701,7 +722,11 @@ function renderPrivateHistory() {
       var ds= d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
       return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);">' +
         '<span style="font-family:var(--mono);color:var(--muted);">'+ds+'</span>' +
-        '<span style="color:var(--gold);">'+((p.alcohol?'🍺 '+p.alcohol:'')+' '+(p.fap?'x'+p.fap:'')).trim()+'</span>' +
+        '<span style="color:var(--gold);">' + 
+          ((p.alcohol ? '🍺' + p.alcohol : '') + ' ' + 
+           (p.fap ? 'x' + p.fap : '') + ' ' + 
+           (p.junk && p.junk.length ? '🍩' + p.junk.length : '')).trim() + 
+        '</span>' +
       '</div>';
     }).join('');
 }
@@ -712,6 +737,21 @@ function adjPriv(field, delta) {
   state.private[k][field] = Math.max(0, (state.private[k][field]||0) + delta);
   saveState(state);
   renderPrivate();
+}
+
+function addJunk() {
+  var inp = document.getElementById('junkInput');
+  if (!inp || !inp.value.trim()) return;
+  var k = todayKey();
+  if (!state.private[k]) state.private[k] = { alcohol: 0, fap: 0, junk: [] };
+  if (!state.private[k].junk) state.private[k].junk = [];
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  state.private[k].junk.push({ text: inp.value.trim(), time: timeStr });
+  inp.value = '';
+  saveState(state);
+  renderPrivate();
+  showToast('Junk logged');
 }
 
 function lockPrivate() {
@@ -1277,6 +1317,65 @@ function renderAll() {
   loadSleepForm(); renderSleepDisplay(); renderTodoWidget(); renderFrontTodo();
 }
 
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(function(permission) {
+      if (permission === 'granted') {
+        showToast('Notifications enabled!');
+        scheduleReminders();
+      }
+    });
+  } else if (Notification.permission === 'granted') {
+    scheduleReminders();
+  }
+}
+
+function sendNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  new Notification(title, {
+    body: body,
+    icon: 'https://aryankhare1225.github.io/discipline-os/icon.png',
+    badge: 'https://aryankhare1225.github.io/discipline-os/icon.png'
+  });
+}
+
+function scheduleReminders() {
+  if (window._reminderInterval) clearInterval(window._reminderInterval);
+  window._reminderInterval = setInterval(function() {
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var entry = getTodayEntry();
+    var doneCount = Object.keys(entry.checks || {}).map(function(k){ return entry.checks[k]; }).filter(Boolean).length;
+
+    // 7:30 AM — log sleep
+    if (h === 7 && m === 30) {
+      sendNotification('Good morning Aryan!', 'Day ' + daysSinceStart() + ' — log your sleep hours from last night.');
+    }
+    // 1:00 PM — healthy lunch
+    if (h === 13 && m === 0) {
+      sendNotification('Lunch time!', 'No junk, no sugar. Roti + dal + sabzi + salad. You know the plan.');
+    }
+    // 6:00 PM — evening run
+    if (h === 18 && m === 0) {
+      sendNotification('Evening run time!', 'Get out. 30 mins. Close those fitness rings.');
+    }
+    // 7:30 PM — healthy dinner
+    if (h === 19 && m === 30) {
+      sendNotification('Dinner time!', 'No junk, no sugar. Light and clean. You are building a machine.');
+    }
+    // 9:00 PM — log day reminder
+    if (h === 21 && m === 0 && !entry.ts) {
+      sendNotification('Log your day Aryan!', doneCount + '/8 checks done. Fill your diary before you sleep.');
+    }
+    // 10:00 PM — final nudge
+    if (h === 22 && m === 0 && doneCount < 4) {
+      sendNotification('Still time!', 'Only ' + doneCount + '/8 checks. Need 4 for a productive day.');
+    }
+  }, 60000);
+}
+
 auth.onAuthStateChanged(function(user) {
   if (user) {
     currentUser = user;
@@ -1301,6 +1400,7 @@ loadSleepForm();
 renderSleepDisplay();
 renderTodoWidget();
 renderFrontTodo();
+requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';
 </script>
 </body>

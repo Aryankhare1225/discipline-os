@@ -1262,6 +1262,7 @@ function addExpense() {
   var cat    = document.getElementById('expCat');
   var amount = document.getElementById('expAmount');
   var note   = document.getElementById('expNote');
+  if (!state.expenses) state.expenses = {};
   if (!cat || !amount || !amount.value || isNaN(+amount.value) || +amount.value <= 0) {
     showToast('Enter a valid amount');
     return;
@@ -1293,6 +1294,7 @@ function deleteExpense(dateKey, idx) {
 
 function saveBudget(catId) {
   var inp = document.getElementById('budget-' + catId);
+  if (!state.budgets) state.budgets = {};
   if (!inp || isNaN(+inp.value)) return;
   state.budgets[catId] = +inp.value;
   saveState(state);
@@ -1339,7 +1341,7 @@ function renderMoney() {
   var overallPct = totalBudget ? Math.min(total / totalBudget * 100, 100) : 0;
   var overallColor = overallPct > 90 ? '#e05252' : overallPct > 70 ? '#f0a500' : 'var(--gold)';
 
-  var todayExp = state.expenses[todayKey()] || [];
+  var todayExp = (state.expenses && state.expenses[todayKey()]) ? state.expenses[todayKey()] : [];
 
   var html =
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
@@ -1505,6 +1507,8 @@ function loadRemote() {
         if (!remote.todos)     remote.todos     = {};
         if (!remote.sleep)     remote.sleep     = {};
         if (!remote.private)   remote.private   = {};
+        if (!remote.expenses)  remote.expenses  = {};
+        if (!remote.budgets)   remote.budgets   = { rent: 15000, electricity: 1500, food: 8000, maid: 2000, laundry: 1000, commute: 2000, cafe: 2000, recharge: 500, shopping: 3000, other: 2000 };
         state = remote;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         renderAll();

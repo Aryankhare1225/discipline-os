@@ -872,19 +872,24 @@ function renderFrontTodo() {
 }
 
 
-function archiveDoneTodos() {
+function rolloverTodos() {
   var today = todayKey();
-  // Move completed tasks from previous days to history (they stay in state.todos, just flagged)
+  var changed = false;
+  var carryOver = [];
   Object.keys(state.todos).forEach(function(k) {
-    if (k !== today) {
-      // Archive done tasks - mark them as archived so they show in history but not active
-      state.todos[k].forEach(function(t) {
-        if (!t.archived) t.archived = true;
-      });
-    }
+    if (k >= today) return;
+    (state.todos[k] || []).forEach(function(t) {
+      if (!t.done) carryOver.push({ text: t.text, done: false });
+    });
+    delete state.todos[k];
+    changed = true;
   });
-  // Keep only today's UNCOMPLETED tasks visible (completed stay struck off until midnight)
-  // Already handled by renderTodoWidget date check
+  if (carryOver.length) {
+    if (!state.todos[today]) state.todos[today] = [];
+    carryOver.forEach(function(t) { state.todos[today].push(t); });
+    changed = true;
+  }
+  if (changed) saveState(state);
 }
 
 function addTodo() {
@@ -929,7 +934,7 @@ function renderChecklist() {
     var el=document.getElementById('d-'+k); if(el) el.value=d[k]||'';
   });
   var doneCount=Object.keys(entry.checks||{}).map(function(_k){return entry.checks||{}[_k];}).filter(Boolean).length;
-  archiveDoneTodos();
+  rolloverTodos();
   document.getElementById('saveBtn').textContent = entry.ts
     ? 'Logged ('+doneCount+'/'+CHECKS.length+') — Update' : 'Log Today';
 }
@@ -1800,6 +1805,7 @@ auth.onAuthStateChanged(function(user) {
 });
 
 renderQuote();
+rolloverTodos();
 renderHero();
 renderMiniGoals();
 renderChecklist();

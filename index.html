@@ -221,7 +221,7 @@
   <div class="header-inner">
     <div class="topbar">
       <div class="topbar-left">
-        <div class="logo-name" onclick="goHome()" title="Go to Home">Aryan Khare</div>
+        <div class="logo-name" id="logoName" onclick="goHome()" title="Go to Home">Aryan Khare</div>
         <div class="logo-sub">Discipline OS &middot; 2026</div>
       </div>
       <div class="topbar-right">
@@ -332,12 +332,14 @@
     </div>
   </div>
   <div class="divider"></div>
+  <div id="todoSection">
   <div class="section-title">To-Do List</div>
   <div id="todoInputArea">
     <input id="todoInput" type="text" class="diary-input" placeholder="Add a task..." style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')addTodo()">
     <button onclick="addTodo()" class="btn-save" style="padding:10px;">+ Add Task</button>
   </div>
   <div id="todayTodoList" style="margin-top:10px;"></div>
+  </div>
 </div>
 
 <div class="panel" id="panel-calendar">
@@ -409,6 +411,14 @@
     <button class="pin-btn" onclick="pinPress('back')" style="font-size:14px;">&#9003;</button>
     <button class="pin-btn" onclick="pinPress('cancel')" style="font-size:11px;">Cancel</button>
   </div>
+</div>
+
+<!-- NAME OVERLAY (first sign-in) -->
+<div class="secret-overlay hidden" id="nameOverlay">
+  <div class="pin-title">Welcome — enter your name</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:260px;line-height:1.5;">Shown on the home page like your personal dashboard.</div>
+  <input id="nameInput" type="text" class="diary-input" placeholder="Full name e.g. Aryan Khare" style="width:260px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
+  <button onclick="saveDisplayName()" class="btn-save" style="width:260px;padding:12px;">Continue</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -540,6 +550,7 @@ if (!state.customCategories) state.customCategories = [];
 if (!state.expenseArchive) state.expenseArchive = [];
 if (!state.moneyView) state.moneyView = { range: 'month', search: '' };
 if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
+if (state.profileName === undefined) state.profileName = '';
 backfillExpenseArchive();
 rebuildExpensesFromArchive();
 state.pin = '1225';
@@ -1081,14 +1092,83 @@ function renderFrontTodo() {
         '<span style="font-size:12px;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+';flex:1;">'+t.text+'</span>'+
       '</div>';
     }).join('')
-    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">No tasks yet — <span style="color:var(--gold);cursor:pointer;" onclick="switchTab(\'today\')">add in Today tab</span></div>';
+    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">No tasks yet — <span style="color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">add a task</span></div>';
   el.innerHTML = '<div class="goal-card home-card">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
       '<span style="font-size:12px;font-weight:600;">📋 Today\'s Tasks</span>'+
       '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);">'+done+'/'+total+' done</span>'+
     '</div>'+ listHtml +
-    '<div style="text-align:right;margin-top:6px;"><span style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="switchTab(\'today\')">Manage tasks →</span></div>'+
+    '<div style="text-align:right;margin-top:6px;"><span style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">Manage tasks →</span></div>'+
   '</div>';
+}
+
+function scrollToSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var header = document.querySelector('.site-header');
+  var offset = header ? header.offsetHeight + 12 : 88;
+  var top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+
+function goToTodoList() {
+  switchTab('today', 'todoSection');
+  setTimeout(function() {
+    scrollToSection('todoSection');
+    var inp = document.getElementById('todoInput');
+    if (inp) inp.focus();
+  }, 120);
+}
+
+function getProfileFullName() {
+  return (state.profileName && state.profileName.trim()) ? state.profileName.trim() : 'Aryan Khare';
+}
+
+function getProfileFirstName() {
+  var parts = getProfileFullName().split(/\s+/);
+  return parts[0] || 'User';
+}
+
+function renderUserDisplay() {
+  var logo = document.getElementById('logoName');
+  if (logo) logo.textContent = getProfileFullName();
+  var badge = document.getElementById('userBadge');
+  if (badge && currentUser) badge.textContent = getProfileFirstName();
+}
+
+function openNameOverlay() {
+  var ov = document.getElementById('nameOverlay');
+  var inp = document.getElementById('nameInput');
+  if (inp) {
+    inp.value = '';
+    if (currentUser && currentUser.displayName) inp.value = currentUser.displayName;
+    else if (state.profileName) inp.value = state.profileName;
+  }
+  if (ov) ov.className = 'secret-overlay';
+  setTimeout(function() { if (inp) inp.focus(); }, 100);
+}
+
+function closeNameOverlay() {
+  var ov = document.getElementById('nameOverlay');
+  if (ov) ov.className = 'secret-overlay hidden';
+}
+
+function saveDisplayName() {
+  var inp = document.getElementById('nameInput');
+  if (!inp) return;
+  var name = inp.value.trim();
+  if (!name) { showToast('Enter your name'); return; }
+  state.profileName = name;
+  saveState(state);
+  renderUserDisplay();
+  closeNameOverlay();
+  showToast('Welcome, ' + getProfileFirstName() + '!');
+}
+
+function promptDisplayNameIfNeeded() {
+  if (!currentUser) return;
+  if (state.profileName && state.profileName.trim()) return;
+  openNameOverlay();
 }
 
 
@@ -2293,7 +2373,7 @@ function toggleBudgetSettings() {
   else { d.style.display = 'none'; if (t) t.textContent = '+'; }
 }
 
-function switchTab(id){
+function switchTab(id, scrollTargetId){
   closeThemePopover();
   if(id==='private'){
     if(!PIN_UNLOCKED){ openPinOverlay(); return; }
@@ -2314,6 +2394,9 @@ function switchTab(id){
   if(id==='money')    renderMoney();
   if(id==='history')  renderHistory();
   if(id==='today')    { renderChecklist(); loadSleepForm(); renderSleepDisplay(); renderTodoWidget(); }
+  if (scrollTargetId) {
+    setTimeout(function() { scrollToSection(scrollTargetId); }, 80);
+  }
 }
 
 function showToast(msg){
@@ -2353,6 +2436,7 @@ function loadRemote() {
         remote.customCategories = mergeCustomCategories(local.customCategories, remote.customCategories);
         remote.moneyView = local.moneyView || remote.moneyView || { range: 'month', search: '' };
         remote.appearance = local.appearance || remote.appearance || { mode: 'dark', accent: 'gold' };
+        remote.profileName = remote.profileName || local.profileName || '';
         if (local.budgets) {
           remote.budgets = remote.budgets || {};
           Object.keys(local.budgets).forEach(function(k) {
@@ -2363,8 +2447,10 @@ function loadRemote() {
         rebuildExpensesFromArchive();
         state = remote;
         applyAppearance();
+        renderUserDisplay();
         saveState(state);
         renderAll();
+        promptDisplayNameIfNeeded();
         if (currentSection === 'home') goHome();
         else switchTab(currentSection);
         showSync('Up to date');
@@ -2406,6 +2492,7 @@ function signOut() {
     currentUser = null;
     document.getElementById('loginBtn').style.display = 'block';
     document.getElementById('userBadge').style.display = 'none';
+    renderUserDisplay();
     showToast('Signed out');
   });
 }
@@ -2482,12 +2569,13 @@ auth.onAuthStateChanged(function(user) {
     document.getElementById('loginBtn').style.display = 'none';
     var badge = document.getElementById('userBadge');
     badge.style.display = 'block';
-    badge.textContent = user.displayName ? user.displayName.split(' ')[0] : 'Signed in';
+    renderUserDisplay();
     loadRemote();
   } else {
     currentUser = null;
     document.getElementById('loginBtn').style.display = 'block';
     document.getElementById('userBadge').style.display = 'none';
+    renderUserDisplay();
   }
 });
 
@@ -2495,6 +2583,7 @@ renderQuote();
 rolloverTodos();
 applyAppearance();
 renderThemePopover();
+renderUserDisplay();
 goHome();
 requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';

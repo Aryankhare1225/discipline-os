@@ -30,10 +30,8 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--black);color:var(--text);font-family:var(--sans);min-height:100vh;padding:0 0 80px 0;}
 
-  .topbar{display:flex;align-items:center;gap:12px;padding:10px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--topbar);backdrop-filter:blur(14px);z-index:100;}
-  .topbar-left{flex-shrink:0;min-width:120px;}
-  .topbar-nav{flex:1;display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0;padding:2px 0;}
-  .topbar-nav::-webkit-scrollbar{display:none;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--topbar);backdrop-filter:blur(14px);z-index:100;}
+  .topbar-left{flex-shrink:0;}
   .topbar-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
   .topbar-actions{display:flex;align-items:center;gap:8px;}
   .logo-name{font-family:var(--mono);font-size:15px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:opacity .15s;}
@@ -90,7 +88,7 @@
   .mini-goal-bar{height:3px;background:var(--gold);border-radius:3px;transition:width 0.6s ease;}
   .mini-goal-val{font-family:var(--mono);font-size:9px;color:var(--muted);}
 
-  .tabs{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;}
+  .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 40px;gap:0;margin-top:0;overflow-x:auto;scrollbar-width:none;max-width:900px;margin-left:auto;margin-right:auto;}
   .theme-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
   .theme-row:last-child{margin-bottom:0;}
   .theme-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;min-width:52px;}
@@ -105,8 +103,8 @@
   .cal-stat-title{font-size:11px;font-weight:600;margin-bottom:4px;}
   .cal-stat-val{font-family:var(--mono);font-size:13px;color:var(--gold);}
   .tabs::-webkit-scrollbar{display:none;}
-  .tab{padding:6px 10px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);cursor:pointer;border:none;border-radius:6px;transition:all 0.2s;background:transparent;white-space:nowrap;flex-shrink:0;}
-  .tab.active{color:var(--gold);background:var(--gold-dim);}
+  .tab{padding:11px 15px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex-shrink:0;}
+  .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
 
   .panel{display:none;padding:18px 40px;max-width:900px;margin:0 auto;width:100%;}
   .panel.active{display:block;}
@@ -181,8 +179,8 @@
   .toast.show{transform:translateX(-50%) translateY(0);}
   .divider{height:1px;background:var(--border);margin:18px 0;}
 
-  @media(max-width:380px){.day-dot{width:33px;height:33px;}.days-header span{width:33px;}.goals-grid{padding:12px 14px 0;}.hero-row{padding:20px 16px 12px;gap:0;}.hero-divider{margin:0 16px;}.panel{padding:14px 16px;}.topbar{padding:10px 12px;gap:8px;}.topbar-left{min-width:90px;}.logo-name{font-size:12px;}.topbar-nav .tab{padding:5px 7px;font-size:9px;}.quote-banner{margin:10px 16px 0;width:auto;}}
-  @media(max-width:600px){.hero-row{padding:20px 20px 12px;}.hero-divider{margin:0 20px;}.panel{padding:16px 20px;}.topbar{padding:10px 16px;}.goals-grid{padding:12px 20px 0;}.quote-banner{margin:10px 20px 0;}}
+  @media(max-width:380px){.day-dot{width:33px;height:33px;}.days-header span{width:33px;}.goals-grid{padding:12px 14px 0;}.hero-row{padding:20px 16px 12px;gap:0;}.hero-divider{margin:0 16px;}.panel{padding:14px 16px;}.topbar{padding:10px 16px;}.tabs{padding:0 16px;}.quote-banner{margin:10px 16px 0;width:auto;}}
+  @media(max-width:600px){.hero-row{padding:20px 20px 12px;}.hero-divider{margin:0 20px;}.panel{padding:16px 20px;}.topbar{padding:10px 20px;}.tabs{padding:0 20px;}.goals-grid{padding:12px 20px 0;}.quote-banner{margin:10px 20px 0;}}
 
   .secret-overlay{position:fixed;inset:0;background:var(--black);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
   .secret-overlay.hidden{display:none;}
@@ -215,16 +213,6 @@
     <div class="logo-name" onclick="goHome()" title="Go to Home">Aryan Khare</div>
     <div class="logo-sub">Discipline OS &middot; 2026</div>
   </div>
-  <div class="topbar-nav tabs">
-    <button class="tab" onclick="switchTab('today')">Today</button>
-    <button class="tab" onclick="switchTab('calendar')">Calendar</button>
-    <button class="tab" onclick="switchTab('goals')">Goals</button>
-    <button class="tab" onclick="switchTab('body')">Body</button>
-    <button class="tab" onclick="switchTab('tapan')">Tapan</button>
-    <button class="tab" onclick="switchTab('money')">Money</button>
-    <button class="tab" onclick="switchTab('private')">&#128274;</button>
-    <button class="tab" onclick="switchTab('history')">History</button>
-  </div>
   <div class="topbar-right">
     <div class="date-badge" id="topDate"></div>
     <div class="topbar-actions">
@@ -240,6 +228,17 @@
 <div id="themePopover" class="theme-popover"></div>
 
 <div id="syncStatus" style="display:none;text-align:center;font-family:monospace;font-size:10px;padding:6px;background:var(--gold-dim);color:var(--gold);letter-spacing:.08em;"></div>
+
+<div class="tabs">
+  <button class="tab" onclick="switchTab('today')">Today</button>
+  <button class="tab" onclick="switchTab('calendar')">Calendar</button>
+  <button class="tab" onclick="switchTab('goals')">Goals</button>
+  <button class="tab" onclick="switchTab('body')">Body</button>
+  <button class="tab" onclick="switchTab('tapan')">Tapan</button>
+  <button class="tab" onclick="switchTab('money')">Money</button>
+  <button class="tab" onclick="switchTab('private')">&#128274;</button>
+  <button class="tab" onclick="switchTab('history')">History</button>
+</div>
 
 <div id="homeScreen">
 <div class="hero-row">
@@ -417,7 +416,7 @@ var currentUser = null;
 
 var CHECKS=[
   {id:'workout',  name:'Workout + Fitness Rings',        desc:'Close all three rings',            emoji:'🏋️'},
-  {id:'noporn',   name:'No Porn',                        desc:'Stay clean today',                 emoji:'🚫'},
+  {id:'noporn',   name:'No Reels & Visuals',             desc:'Skip reels and random visuals today', emoji:'📱'},
   {id:'nosugar',  name:'No Sugar',                       desc:'Zero added sugar today',           emoji:'🍬'},
   {id:'sleep',    name:'Sound Sleep',                    desc:'Auto-checked if 6-7.5 hrs night',  emoji:'😴', auto:true},
   {id:'diary',    name:'Diary Entry',                    desc:'Word, learned, missed, plan',      emoji:'📓'},
@@ -546,7 +545,7 @@ function isProductive(e) { return e && e.checks && Object.keys(e.checks).map(fun
 function isPartial(e)    { var n = e && e.checks ? Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length : 0; return n>=1 && n<6; }
 function countProd()     { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(isProductive).length; }
 function countNoSugar()  { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.nosugar; }).length; }
-function countNoPorn()   { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.noporn; }).length; }
+function countNoReels() { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.noporn; }).length; }
 function countNoJunk()   { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.food; }).length; }
 function countRunDays()  { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.workout; }).length; }
 
@@ -569,7 +568,7 @@ function getMonthHabitStats(year, month) {
   var days = getDaysInMonth(year, month);
   return {
     days: days,
-    noPorn: countCheckForMonth('noporn', year, month),
+    noReels: countCheckForMonth('noporn', year, month),
     noSugar: countCheckForMonth('nosugar', year, month),
     noJunk: countCheckForMonth('food', year, month),
     run: countCheckForMonth('workout', year, month)
@@ -976,7 +975,7 @@ function renderPrivateMonth() {
   // placeholder - rendered inline in renderPrivate
 }
 
-function calcNoSugarFromPorn() {
+function calcNoSugarFromReels() {
   // keep existing
 }
 
@@ -1027,7 +1026,7 @@ function renderMiniGoals() {
   var ms = getCurrentMonthHabitStats();
   var monthName = new Date().toLocaleString('en', { month: 'short' });
   var goals=[
-    {emoji:'🚫', title:'No Porn',    val:ms.noPorn+' / '+ms.days+' this month', pct:Math.min(ms.noPorn/ms.days*100,100), done:ms.noPorn>=ms.days},
+    {emoji:'📱', title:'Reels & Visuals', val:ms.noReels+' / '+ms.days+' this month', pct:Math.min(ms.noReels/ms.days*100,100), done:ms.noReels>=ms.days},
     {emoji:'🍬', title:'No Sugar',   val:ms.noSugar+' / '+ms.days+' this month', pct:Math.min(ms.noSugar/ms.days*100,100), done:ms.noSugar>=ms.days},
     {emoji:'🍔', title:'No Junk',    val:ms.noJunk+' / '+ms.days+' this month', pct:Math.min(ms.noJunk/ms.days*100,100), done:ms.noJunk>=ms.days},
     {emoji:'🏃', title:'30 min Run', val:ms.run+' / '+ms.days+' this month', pct:Math.min(ms.run/ms.days*100,100), done:ms.run>=ms.days},
@@ -1217,7 +1216,7 @@ function renderCalendar() {
     statsEl.innerHTML =
       '<div class="section-title" style="margin-top:16px;margin-bottom:10px;">Monthly Habit Log — '+monthName+'</div>'+
       '<div class="cal-month-stats">'+
-        statCard('🚫','No Porn', ms.noPorn)+
+        statCard('📱','Reels & Visuals', ms.noReels)+
         statCard('🍬','No Sugar', ms.noSugar)+
         statCard('🍔','No Junk', ms.noJunk)+
         statCard('🏃','30 min Run', ms.run)+
@@ -1228,10 +1227,10 @@ function renderCalendar() {
 // ── GOALS ──
 function renderGoals() {
   var ms = getCurrentMonthHabitStats();
-  var noPornDays=ms.noPorn, noSugarDays=ms.noSugar, noJunkDays=ms.noJunk, runDays=ms.run, monthDays=ms.days;
+  var noReelsDays=ms.noReels, noSugarDays=ms.noSugar, noJunkDays=ms.noJunk, runDays=ms.run, monthDays=ms.days;
   var btnStyle='font-size:10px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:6px;padding:2px 8px;cursor:pointer;';
   document.getElementById('goalsList').innerHTML=
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🚫</span><span class="goal-title">Get Rid of Porn</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noPornDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noPornDays+' / '+monthDays+' days this month — see Calendar for past months</div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">📱</span><span class="goal-title">No Reels & Visuals</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noReelsDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noReelsDays+' / '+monthDays+' days this month — see Calendar for past months</div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍬</span><span class="goal-title">No Sugar Habit</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noSugarDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noSugarDays+' / '+monthDays+' sugar-free days this month</div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">💪</span><span class="goal-title">Body Fat below 3%</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+(state.goals.bodyfat||0)+'%"></div></div><div class="goal-note">See Body tab for full tracking  <button onclick="switchTab(\'body\')" style="'+btnStyle+'">Open Body Tab</button></div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍔</span><span class="goal-title">No Junk Food</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noJunkDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noJunkDays+' / '+monthDays+' junk-free days this month</div></div>'+
@@ -1682,11 +1681,19 @@ function setMoneyRange(r) {
   renderMoney();
 }
 
-function onExpenseSearch() {
+function runExpenseSearch() {
   var inp = document.getElementById('expSearch');
   if (!state.moneyView) state.moneyView = { range: 'month', search: '' };
-  state.moneyView.search = inp ? inp.value : '';
-  renderMoney();
+  state.moneyView.search = inp ? inp.value.trim() : '';
+  saveState(state);
+  renderMoney(true);
+}
+
+function clearExpenseSearch() {
+  if (!state.moneyView) state.moneyView = { range: 'month', search: '' };
+  state.moneyView.search = '';
+  saveState(state);
+  renderMoney(true);
 }
 
 function rangeBtnStyle(active) {
@@ -2040,9 +2047,10 @@ function renderFrontMoney() {
     '</div>';
 }
 
-function renderMoney() {
+function renderMoney(preserveScroll) {
   var el = document.getElementById('moneyContent');
   if (!el) return;
+  var scrollY = preserveScroll ? window.scrollY : null;
   var range = (state.moneyView && state.moneyView.range) || 'month';
   var search = (state.moneyView && state.moneyView.search) || '';
   var dr = getExpenseDateRange(range);
@@ -2087,7 +2095,7 @@ function renderMoney() {
             '</label>';
           }).join('') +
         '</div>'
-      : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add friends above first.</div>') +
+      : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add friends in the section below first.</div>') +
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">' +
         '<label style="font-size:11px;color:var(--muted);">Mode</label>' +
         '<select id="splitMode" onchange="onSplitModeChange()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;">' +
@@ -2113,14 +2121,7 @@ function renderMoney() {
     '</div>'
     : '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">No expenses match this view.</div>';
 
-  var html =
-    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
-      '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Analysis</div>' +
-      analysisNotes.map(function(n) {
-        return '<div style="font-size:12px;color:var(--text);line-height:1.55;padding:6px 0;border-bottom:1px solid var(--border);">• ' + n + '</div>';
-      }).join('') +
-    '</div>' +
-
+  var friendsBlock =
     '<div class="goal-card" style="margin-bottom:14px;">' +
       '<div class="section-title" style="margin-bottom:8px;">Friends (for splits)</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
@@ -2137,6 +2138,14 @@ function renderMoney() {
           }).join('') +
         '</div>'
       : '<div style="font-size:11px;color:var(--muted);">Add friends to split bills.</div>') +
+    '</div>';
+
+  var html =
+    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Analysis</div>' +
+      analysisNotes.map(function(n) {
+        return '<div style="font-size:12px;color:var(--text);line-height:1.55;padding:6px 0;border-bottom:1px solid var(--border);">• ' + n + '</div>';
+      }).join('') +
     '</div>' +
 
     (balanceNames.length ?
@@ -2228,14 +2237,21 @@ function renderMoney() {
           '<button style="' + rangeBtnStyle(range === 'all') + '" onclick="setMoneyRange(\'all\')">All</button>' +
         '</div>' +
       '</div>' +
-      '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="Search tag, amount, note, date, friend..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;margin-bottom:8px;" oninput="onExpenseSearch()">' +
+      '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
+        '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="Search tag, amount, note, date, friend..." style="flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;" onkeydown="if(event.key===\'Enter\')runExpenseSearch()">' +
+        '<button onclick="runExpenseSearch()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">Search</button>' +
+        (search ? '<button onclick="clearExpenseSearch()" style="padding:9px 12px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">Clear</button>' : '') +
+      '</div>' +
       '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px;">' + dr.label + ' · ' + rows.length + ' entries · Rs ' + total.toLocaleString('en-IN') + ' (your share)</div>' +
       logExpenseBlock +
       expenseListBlock +
-    '</div>';
+    '</div>' +
+
+    friendsBlock;
 
   el.innerHTML = html;
   selectCat('food');
+  if (preserveScroll && scrollY !== null) window.scrollTo(0, scrollY);
 }
 
 function selectCat(id) {

@@ -539,7 +539,6 @@ var DIET_PLAN = {
 
 var DEFAULT_WORK_GOAL_TITLE = '🎯 Work Goal';
 var DEFAULT_WORK_GOAL_TEXT = 'Every day counts. Log what your manager said or noticed, and what you shipped or delivered.';
-var HEIGHT_CM   = 180.3;
 var STORAGE_KEY = 'aryan_tracker_v4';
 
 function loadState() {
@@ -560,7 +559,8 @@ function saveState(s) {
 var state = loadState();
 if (!state.days)      state.days      = {};
 if (!state.goals)     state.goals     = {bodyfat:0, usa:false};
-if (!state.weightLog) state.weightLog = [{date:'2026-06-24', weight:87, note:'Starting weight'}];
+if (!state.weightLog) state.weightLog = [];
+if (state.heightCm === undefined) state.heightCm = null;
 if (!state.bfLog)     state.bfLog     = [];
 if (!state.tapanLog)  state.tapanLog  = [];
 if (!state.todos)     state.todos     = {};
@@ -1104,8 +1104,13 @@ function calcNoSugarFromReels() {
 function calcNavyBF(waist, neck, height) {
   return 86.010 * Math.log10(waist - neck) - 70.041 * Math.log10(height) + 36.76;
 }
+function getHeightCm() {
+  if (state.heightCm === null || state.heightCm === undefined || state.heightCm === '') return null;
+  var h = parseFloat(state.heightCm);
+  return isNaN(h) ? null : h;
+}
 function latestWeight() {
-  if (!state.weightLog || !state.weightLog.length) return 87;
+  if (!state.weightLog || !state.weightLog.length) return null;
   return state.weightLog[state.weightLog.length-1].weight;
 }
 function latestBF() {
@@ -1512,10 +1517,10 @@ function renderGoals() {
 
 // ── BODY TAB ──
 function renderBody() {
-  var wt=latestWeight(), bf=latestBF(), h=HEIGHT_CM;
-  var bmi=wt/Math.pow(h/100,2);
-  var leanMass=bf?wt*(1-bf/100):null;
-  var targetWT=leanMass?(leanMass/0.97).toFixed(1):'~65';
+  var wt=latestWeight(), bf=latestBF(), h=getHeightCm();
+  var bmi=(wt !== null && h) ? wt/Math.pow(h/100,2) : null;
+  var leanMass=(bf && wt !== null) ? wt*(1-bf/100) : null;
+  var targetWT=leanMass?(leanMass/0.97).toFixed(1):'—';
   var wLog=state.weightLog.slice(-14);
   var sparkline='';
   if(wLog.length>1){
@@ -1529,17 +1534,27 @@ function renderBody() {
   }
 
   var html=
+    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">'+
+      '<div class="section-title" style="margin-bottom:8px;">Your Measurements</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">Enter height for BMI and body-fat math. Log weight when you weigh in — nothing is assumed.</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end;">'+
+        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Height (cm)</label>'+
+          '<input id="height-input" type="number" step="0.1" min="100" max="250" placeholder="e.g. 175" value="'+(h ? h : '')+'" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;"></div>'+
+        '<button onclick="saveHeight()" style="padding:11px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;">SAVE HEIGHT</button>'+
+      '</div>'+
+    '</div>'+
+
     // Stats grid
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'+
       '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Current Weight</div>'+
-        '<div style="font-family:var(--mono);font-size:38px;color:var(--gold);font-weight:700;line-height:1;">'+wt+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">kg</div></div>'+
+        '<div style="font-family:var(--mono);font-size:38px;color:var(--gold);font-weight:700;line-height:1;">'+(wt !== null ? wt : '—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+(wt !== null ? 'kg' : 'Log below')+'</div></div>'+
       '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Body Fat %</div>'+
         '<div style="font-family:var(--mono);font-size:38px;color:var(--gold);font-weight:700;line-height:1;">'+(bf?bf.toFixed(1):'?')+'</div>'+
         '<div style="font-size:11px;color:var(--muted);">% (Navy method)</div></div>'+
       '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">BMI</div>'+
-        '<div style="font-family:var(--mono);font-size:28px;color:var(--text);font-weight:700;line-height:1;">'+bmi.toFixed(1)+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">'+(bmi>25?'Overweight':'Normal')+'</div></div>'+
+        '<div style="font-family:var(--mono);font-size:28px;color:var(--text);font-weight:700;line-height:1;">'+(bmi !== null ? bmi.toFixed(1) : '—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+(bmi !== null ? (bmi>25?'Overweight':'Normal') : (h ? 'Log weight' : 'Set height & weight'))+'</div></div>'+
       '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Target at 3% BF</div>'+
         '<div style="font-family:var(--mono);font-size:28px;color:var(--text);font-weight:700;line-height:1;">'+targetWT+'</div>'+
         '<div style="font-size:11px;color:var(--muted);">kg</div></div>'+
@@ -1560,7 +1575,7 @@ function renderBody() {
     // BF Calculator — always visible, not Sunday-gated
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">'+
       '<div class="section-title" style="margin-bottom:4px;">Body Fat Calculator (Navy Method)</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Measure waist at navel level, neck just below larynx. Both in cm.</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Measure waist at navel level, neck just below larynx. Both in cm. Height must be saved above.</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:8px;">'+
         '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Waist (cm)</label>'+
           '<input id="bf-waist" type="number" step="0.1" placeholder="e.g. 92" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;"></div>'+
@@ -1595,11 +1610,21 @@ function renderBody() {
       var w=parseFloat(document.getElementById('bf-waist').value);
       var n=parseFloat(document.getElementById('bf-neck').value);
       var prev=document.getElementById('bfPreview');
+      var height=getHeightCm();
+      if(!height){
+        prev.textContent='Save your height first';
+        prev.style.color='#e05252';
+        return;
+      }
       if(!isNaN(w)&&!isNaN(n)&&w>n&&n>0){
-        var bf=calcNavyBF(w,n,HEIGHT_CM);
+        var bf=calcNavyBF(w,n,height);
         var wt2=latestWeight();
-        var lean=(wt2*(1-bf/100)).toFixed(1);
-        prev.textContent='Preview: '+bf.toFixed(1)+'% BF — Lean mass: '+lean+' kg';
+        if (wt2 !== null) {
+          var lean=(wt2*(1-bf/100)).toFixed(1);
+          prev.textContent='Preview: '+bf.toFixed(1)+'% BF — Lean mass: '+lean+' kg';
+        } else {
+          prev.textContent='Preview: '+bf.toFixed(1)+'% BF — log weight for lean mass';
+        }
         prev.style.color='var(--gold)';
       } else {
         prev.textContent=w&&n&&w<=n?'Waist must be greater than neck':'';
@@ -1607,6 +1632,17 @@ function renderBody() {
       }
     });
   });
+}
+
+function saveHeight() {
+  var el = document.getElementById('height-input');
+  if (!el) return;
+  var v = parseFloat(el.value);
+  if (isNaN(v) || v < 100 || v > 250) { showToast('Enter height between 100–250 cm'); return; }
+  state.heightCm = v;
+  saveState(state);
+  renderBody();
+  showToast('Height saved: ' + v + ' cm');
 }
 
 function toggleDiet(){
@@ -1629,15 +1665,18 @@ function logWeight(){
 function saveBF(){
   var waist=parseFloat(document.getElementById('bf-waist').value);
   var neck =parseFloat(document.getElementById('bf-neck').value);
+  var height=getHeightCm();
+  if(!height){ showToast('Save your height first'); return; }
   if(isNaN(waist)||isNaN(neck)||waist<=neck||neck<=0){
     showToast('Check measurements — waist must be > neck'); return;
   }
-  var bf=calcNavyBF(waist,neck,HEIGHT_CM);
-  var wt=latestWeight(), lean=(wt*(1-bf/100)).toFixed(1);
+  var bf=calcNavyBF(waist,neck,height);
+  var wt=latestWeight();
+  var leanMsg = wt !== null ? ' — Lean: ' + (wt*(1-bf/100)).toFixed(1) + ' kg' : '';
   state.bfLog.push({date:todayKey(),waist:waist,neck:neck,bf:bf});
   state.goals.bodyfat=Math.max(0,Math.min(100,Math.round((1-bf/3)*100)));
   saveState(state); renderBody(); renderMiniGoals();
-  showToast('BF: '+bf.toFixed(1)+'% — Lean: '+lean+' kg');
+  showToast('BF: '+bf.toFixed(1)+'%'+leanMsg);
 }
 
 // ── TAPAN ──
@@ -2622,6 +2661,7 @@ function loadRemote() {
         remote.startDate = remote.startDate || local.startDate || '2026-06-23';
         remote.workGoalTitle = remote.workGoalTitle || local.workGoalTitle || DEFAULT_WORK_GOAL_TITLE;
         remote.workGoalText = remote.workGoalText || local.workGoalText || DEFAULT_WORK_GOAL_TEXT;
+        if (remote.heightCm === undefined || remote.heightCm === null) remote.heightCm = local.heightCm || null;
         if (local.budgets) {
           remote.budgets = remote.budgets || {};
           Object.keys(local.budgets).forEach(function(k) {

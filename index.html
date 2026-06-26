@@ -274,15 +274,6 @@
     </div>
   </div>
   <div class="divider"></div>
-  <div class="section-title">Diary Entry &mdash; saved in this browser's localStorage</div>
-  <div class="diary-grid">
-    <div class="diary-field"><label class="diary-label">&#128292; Word of the Day</label><input class="diary-input" id="d-word" type="text" placeholder="e.g. Stoic — enduring pain without complaint"></div>
-    <div class="diary-field"><label class="diary-label">&#128161; What I Learned</label><textarea class="diary-input" id="d-learned" rows="2" placeholder="Key insight from today..."></textarea></div>
-    <div class="diary-field"><label class="diary-label">&#10060; What I Missed / Fuckups</label><textarea class="diary-input" id="d-missed" rows="2" placeholder="Be brutally honest..."></textarea></div>
-    <div class="diary-field"><label class="diary-label">&#128197; Plan for Tomorrow</label><textarea class="diary-input" id="d-plan" rows="2" placeholder="Top 3 priorities..."></textarea></div>
-  </div>
-  <button class="btn-save" id="saveBtn" onclick="saveToday()">Log Today</button>
-  <div class="divider"></div>
   <div class="section-title">To-Do List</div>
   <div id="todoInputArea">
     <input id="todoInput" type="text" class="diary-input" placeholder="Add a task..." style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')addTodo()">
@@ -655,6 +646,16 @@ function renderPrivate() {
   var fapPct  = Math.min(priv.fap/3*100, 100);
   var html =
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
+      '<div class="section-title" style="margin-bottom:10px;">Diary Entry &mdash; today only</div>' +
+      '<div class="diary-grid" style="margin-bottom:14px;">' +
+        '<div class="diary-field"><label class="diary-label">&#128292; Word of the Day</label><input class="diary-input" id="d-word" type="text" placeholder="e.g. Stoic — enduring pain without complaint"></div>' +
+        '<div class="diary-field"><label class="diary-label">&#128161; What I Learned</label><textarea class="diary-input" id="d-learned" rows="2" placeholder="Key insight from today..."></textarea></div>' +
+        '<div class="diary-field"><label class="diary-label">&#10060; What I Missed / Fuckups</label><textarea class="diary-input" id="d-missed" rows="2" placeholder="Be brutally honest..."></textarea></div>' +
+        '<div class="diary-field"><label class="diary-label">&#128197; Plan for Tomorrow</label><textarea class="diary-input" id="d-plan" rows="2" placeholder="Top 3 priorities..."></textarea></div>' +
+      '</div>' +
+      '<button class="btn-save" id="saveDiaryBtn" onclick="saveDiary()" style="margin-top:0;">Save Diary</button>' +
+    '</div>' +
+    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
         '<span style="font-size:14px;font-weight:600;">Private Log</span>' +
         '<button onclick="lockPrivate()" style="font-size:10px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;">Lock</button>' +
@@ -713,6 +714,17 @@ function renderPrivate() {
       renderPrivateHistory() +
     '</div>';
   document.getElementById('privateContent').innerHTML = html;
+  loadDiaryForm();
+}
+function loadDiaryForm() {
+  var entry = getTodayEntry();
+  var d = entry.diary || {};
+  ['word','learned','missed','plan'].forEach(function(k) {
+    var el = document.getElementById('d-' + k);
+    if (el) el.value = d[k] || '';
+  });
+  var btn = document.getElementById('saveDiaryBtn');
+  if (btn) btn.textContent = entry.ts ? 'Update Diary' : 'Save Diary';
 }
 function adjAlcohol(d) { adjPriv('alcohol', d); }
 function adjFap(d)     { adjPriv('fap', d); }
@@ -929,14 +941,25 @@ function renderChecklist() {
       '<div class="check-text"><div class="check-name">'+c.name+'</div><div class="check-desc">'+c.desc+'</div></div>'+
       '<div class="check-icon">'+(done?'✓':'')+'</div></div>';
   }).join('');
-  var d=entry.diary||{};
-  ['word','learned','missed','plan'].forEach(function(k){
-    var el=document.getElementById('d-'+k); if(el) el.value=d[k]||'';
-  });
-  var doneCount=Object.keys(entry.checks||{}).map(function(_k){return entry.checks||{}[_k];}).filter(Boolean).length;
   rolloverTodos();
-  document.getElementById('saveBtn').textContent = entry.ts
-    ? 'Logged ('+doneCount+'/'+CHECKS.length+') — Update' : 'Log Today';
+}
+
+function saveDiary() {
+  var k = todayKey();
+  if (!state.days[k]) state.days[k] = { checks: {}, diary: {} };
+  state.days[k].diary = {
+    word:    document.getElementById('d-word') ? document.getElementById('d-word').value.trim() : '',
+    learned: document.getElementById('d-learned') ? document.getElementById('d-learned').value.trim() : '',
+    missed:  document.getElementById('d-missed') ? document.getElementById('d-missed').value.trim() : '',
+    plan:    document.getElementById('d-plan') ? document.getElementById('d-plan').value.trim() : '',
+  };
+  state.days[k].ts = new Date().toISOString();
+  saveState(state);
+  loadDiaryForm();
+  renderHero();
+  renderMiniGoals();
+  if (document.getElementById('panel-calendar') && document.getElementById('panel-calendar').classList.contains('active')) renderCalendar();
+  showToast(isProductive(state.days[k]) ? 'Diary saved — productive day!' : 'Diary saved');
 }
 
 function toggleCheck(id) {
@@ -944,21 +967,6 @@ function toggleCheck(id) {
   if(!state.days[k]) state.days[k]={checks:{},diary:{}};
   state.days[k].checks[id]=!state.days[k].checks[id];
   saveState(state); renderChecklist(); renderHero(); renderMiniGoals();
-}
-
-function saveToday() {
-  var k=todayKey();
-  if(!state.days[k]) state.days[k]={checks:{},diary:{}};
-  state.days[k].diary={
-    word:   document.getElementById('d-word').value.trim(),
-    learned:document.getElementById('d-learned').value.trim(),
-    missed: document.getElementById('d-missed').value.trim(),
-    plan:   document.getElementById('d-plan').value.trim(),
-  };
-  state.days[k].ts=new Date().toISOString();
-  saveState(state); renderChecklist(); renderHero(); renderMiniGoals();
-  if(document.getElementById('panel-calendar').classList.contains('active')) renderCalendar();
-  showToast(isProductive(state.days[k])?'🏆 Productive day locked in!':'✓ Entry saved');
 }
 
 // ── CALENDAR ──

@@ -231,7 +231,7 @@
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           </button>
           <button id="loginBtn" onclick="signIn()" style="display:none;font-family:monospace;font-size:10px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;">Sign in</button>
-          <div id="userBadge" style="display:none;font-family:monospace;font-size:10px;color:var(--muted);cursor:pointer;" onclick="signOut()">Sign out</div>
+          <div id="userBadge" style="display:none;font-family:monospace;font-size:10px;color:var(--muted);cursor:pointer;" onclick="openSettings()" title="Settings">Sign out</div>
         </div>
       </div>
     </div>
@@ -241,10 +241,10 @@
     <div class="tabs">
       <button class="tab" onclick="switchTab('today')">Today</button>
       <button class="tab" onclick="switchTab('calendar')">Calendar</button>
+      <button class="tab" onclick="switchTab('money')">Money</button>
+      <button class="tab" onclick="switchTab('tapan')">Work</button>
       <button class="tab" onclick="switchTab('goals')">Goals</button>
       <button class="tab" onclick="switchTab('body')">Body</button>
-      <button class="tab" onclick="switchTab('tapan')">Tapan</button>
-      <button class="tab" onclick="switchTab('money')">Money</button>
       <button class="tab" onclick="switchTab('private')">&#128274;</button>
       <button class="tab" onclick="switchTab('history')">History</button>
     </div>
@@ -265,7 +265,7 @@
       <div class="ring-center">
         <span class="ring-count" id="ringCount">0</span>
         <span class="ring-label">productive</span>
-        <span class="ring-goal">/ 300</span>
+        <span class="ring-goal" id="ringGoalLabel">/ 300</span>
       </div>
     </div>
     <div class="ring-stats-row">
@@ -301,10 +301,11 @@
 </div><!-- /homeScreen -->
 
 <div class="panel" id="panel-today">
-  <div class="section-title">Daily Checks &mdash; need &ge;6 for productive day</div>
+  <div class="section-title" id="checksSectionTitle">Daily Checks — need ≥6 for productive day</div>
   <div class="checklist" id="checklist"></div>
   <!-- SLEEP LOGGING -->
   <div class="divider"></div>
+  <div id="sleepSection">
   <div class="section-title">Sleep Log</div>
   <div id="sleepDisplay"></div>
   <div id="sleepLogForm">
@@ -330,6 +331,7 @@
         </div>
       </div>
     </div>
+    <div id="sleepLogicNote" style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;">Log night sleep (6–7.5 hrs) to auto-check Sound Sleep.</div>
   </div>
   <div class="divider"></div>
   <div id="todoSection">
@@ -370,7 +372,7 @@
 </div>
 
 <div class="panel" id="panel-tapan">
-  <div class="section-title">Tapan Log — Road to USA</div>
+  <div class="section-title">Work Log</div>
   <div id="tapanContent"></div>
 </div>
 
@@ -415,10 +417,36 @@
 
 <!-- NAME OVERLAY (first sign-in) -->
 <div class="secret-overlay hidden" id="nameOverlay">
-  <div class="pin-title">Welcome — enter your name</div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:260px;line-height:1.5;">Shown on the home page like your personal dashboard.</div>
-  <input id="nameInput" type="text" class="diary-input" placeholder="Full name e.g. Aryan Khare" style="width:260px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
-  <button onclick="saveDisplayName()" class="btn-save" style="width:260px;padding:12px;">Continue</button>
+  <div class="pin-title">Welcome — set up your tracker</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:280px;line-height:1.5;">Your productivity count starts today on first sign-in.</div>
+  <input id="nameInput" type="text" class="diary-input" placeholder="Full name e.g. Aryan Khare" style="width:280px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
+  <div id="onboardGoalWrap" style="width:280px;margin-bottom:10px;">
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Yearly productive days target</label>
+    <input id="yearlyGoalInput" type="number" min="1" max="365" value="300" class="diary-input" style="width:100%;margin-bottom:6px;">
+    <div style="font-size:10px;color:var(--muted);line-height:1.45;">Set once — cannot change after saving.</div>
+  </div>
+  <button onclick="saveDisplayName()" class="btn-save" style="width:280px;padding:12px;">Continue</button>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="secret-overlay hidden" id="settingsOverlay">
+  <div class="pin-title">Settings</div>
+  <div style="width:300px;max-height:70vh;overflow-y:auto;padding:0 4px;">
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Display name</label>
+    <input id="settingsNameInput" type="text" class="diary-input" style="width:100%;margin-bottom:12px;">
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Checks needed for productive day</label>
+    <input id="settingsThresholdInput" type="number" min="1" max="8" class="diary-input" style="width:100%;margin-bottom:12px;">
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Yearly productive days target</label>
+    <input id="settingsYearlyGoalInput" type="number" min="1" max="365" class="diary-input" style="width:100%;margin-bottom:4px;">
+    <div id="settingsYearlyGoalNote" style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.4;"></div>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Work goal — title</label>
+    <input id="settingsWorkTitleInput" type="text" class="diary-input" style="width:100%;margin-bottom:10px;">
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Work goal — description</label>
+    <textarea id="settingsWorkTextInput" rows="3" class="diary-input" style="width:100%;margin-bottom:14px;resize:none;"></textarea>
+    <button onclick="saveSettings()" class="btn-save" style="width:100%;padding:12px;margin-bottom:8px;">Save Settings</button>
+    <button onclick="signOut()" class="btn-secondary" style="width:100%;margin-top:0;">Sign Out</button>
+    <button onclick="closeSettings()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:11px;cursor:pointer;">Close</button>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -508,8 +536,8 @@ var DIET_PLAN = {
   ],
 };
 
-var START_DATE  = new Date('2026-06-23');
-var GOAL_DAYS   = 300;
+var DEFAULT_WORK_GOAL_TITLE = '🎯 Work Goal';
+var DEFAULT_WORK_GOAL_TEXT = 'Every day counts. Log what your manager said or noticed, and what you shipped or delivered.';
 var HEIGHT_CM   = 180.3;
 var STORAGE_KEY = 'aryan_tracker_v4';
 
@@ -551,6 +579,12 @@ if (!state.expenseArchive) state.expenseArchive = [];
 if (!state.moneyView) state.moneyView = { range: 'month', search: '' };
 if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
 if (state.profileName === undefined) state.profileName = '';
+if (state.productiveThreshold === undefined) state.productiveThreshold = 6;
+if (state.yearlyProductiveGoal === undefined) state.yearlyProductiveGoal = 300;
+if (state.yearlyGoalLocked === undefined) state.yearlyGoalLocked = false;
+if (!state.workGoalTitle) state.workGoalTitle = DEFAULT_WORK_GOAL_TITLE;
+if (!state.workGoalText) state.workGoalText = DEFAULT_WORK_GOAL_TEXT;
+if (!state.startDate) state.startDate = '2026-06-23';
 backfillExpenseArchive();
 rebuildExpensesFromArchive();
 state.pin = '1225';
@@ -565,8 +599,33 @@ function tomorrowKey() {
   return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
 }
 function getTodayEntry() { return state.days[todayKey()] || {checks:{}, diary:{}, ts:null}; }
-function isProductive(e) { return e && e.checks && Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length >= 6; }
-function isPartial(e)    { var n = e && e.checks ? Object.keys(e.checks).map(function(_k){return e.checks[_k];}).filter(Boolean).length : 0; return n>=1 && n<6; }
+function getProductiveThreshold() { return state.productiveThreshold || 6; }
+function getYearlyGoal() { return state.yearlyProductiveGoal || 300; }
+function getStartDate() {
+  if (state.startDate) {
+    var p = state.startDate.split('-');
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  return new Date('2026-06-23');
+}
+function getWorkGoalTitle() { return state.workGoalTitle || DEFAULT_WORK_GOAL_TITLE; }
+function getWorkGoalText() { return state.workGoalText || DEFAULT_WORK_GOAL_TEXT; }
+function getDoneCheckCount(e) {
+  if (!e || !e.checks) return 0;
+  return Object.keys(e.checks).map(function(_k) { return e.checks[_k]; }).filter(Boolean).length;
+}
+function isProductive(e) { return getDoneCheckCount(e) >= getProductiveThreshold(); }
+function isPartial(e) {
+  var n = getDoneCheckCount(e);
+  return n >= 1 && n < getProductiveThreshold();
+}
+function updateProductiveLabels() {
+  var th = getProductiveThreshold();
+  var title = document.getElementById('checksSectionTitle');
+  if (title) title.textContent = 'Daily Checks — need \u2265' + th + ' for productive day';
+  var ringGoal = document.getElementById('ringGoalLabel');
+  if (ringGoal) ringGoal.textContent = '/ ' + getYearlyGoal();
+}
 function countProd()     { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(isProductive).length; }
 function countNoSugar()  { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.nosugar; }).length; }
 function countNoReels() { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.noporn; }).length; }
@@ -719,7 +778,7 @@ function calcStreak() {
 }
 function daysSinceStart() {
   var n=new Date(); n.setHours(0,0,0,0);
-  var s=new Date(START_DATE); s.setHours(0,0,0,0);
+  var s=getStartDate(); s.setHours(0,0,0,0);
   return Math.max(1, Math.floor((n-s)/86400000)+1);
 }
 // ── SLEEP HELPERS ──
@@ -750,19 +809,56 @@ function calcSleep() {
   var napEl= document.getElementById('napDurDisplay');
   if (ndEl && nightDur !== null) ndEl.textContent = formatHours(nightDur);
   if (napEl && napDur  !== null) napEl.textContent = formatHours(napDur);
-  // Auto-check sound sleep: night sleep 6-7.5 hrs
   var k = todayKey();
-  if (!state.days[k]) state.days[k] = {checks:{}, diary:{}};
-  if (nightDur !== null) {
-    state.days[k].checks['sleep'] = (nightDur >= 6 && nightDur <= 7.5);
-  }
-  // Save sleep data
   if (!state.sleep[k]) state.sleep[k] = {};
   if (ns && ne) { state.sleep[k].nightStart = ns; state.sleep[k].nightEnd = ne; state.sleep[k].nightDur = nightDur; }
   if (nps && npe) { state.sleep[k].napStart = nps; state.sleep[k].napEnd = npe; state.sleep[k].napDur = napDur; }
   saveState(state);
-  renderChecklist();
+  applySleepCheckFromLog();
   renderSleepDisplay();
+}
+
+function applySleepCheckFromLog() {
+  var k = todayKey();
+  if (!state.days[k]) state.days[k] = { checks: {}, diary: {} };
+  var ns = document.getElementById('nightStart') ? document.getElementById('nightStart').value : '';
+  var ne = document.getElementById('nightEnd') ? document.getElementById('nightEnd').value : '';
+  var nightDur = calcDuration(ns, ne);
+  var noteEl = document.getElementById('sleepLogicNote');
+  var msg = '';
+  if (!ns || !ne || nightDur === null) {
+    state.days[k].checks['sleep'] = false;
+    msg = 'Enter night sleep start and wake times. Sound Sleep checks only when night sleep is 6–7.5 hours.';
+  } else if (nightDur >= 6 && nightDur <= 7.5) {
+    state.days[k].checks['sleep'] = true;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is within 6–7.5h — Sound Sleep checked.';
+  } else if (nightDur < 6) {
+    state.days[k].checks['sleep'] = false;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is under 6h — Sound Sleep unchecked.';
+  } else {
+    state.days[k].checks['sleep'] = false;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is over 7.5h — Sound Sleep unchecked.';
+  }
+  if (noteEl) {
+    noteEl.textContent = msg;
+    noteEl.style.borderColor = state.days[k].checks['sleep'] ? 'var(--gold-mid)' : 'var(--border)';
+    noteEl.style.color = state.days[k].checks['sleep'] ? 'var(--gold)' : 'var(--muted)';
+  }
+  saveState(state);
+  renderChecklist();
+  renderHero();
+  renderMiniGoals();
+}
+
+function goToSleepLog() {
+  switchTab('today', 'sleepSection');
+  setTimeout(function() {
+    scrollToSection('sleepSection');
+    loadSleepForm();
+    applySleepCheckFromLog();
+    var ns = document.getElementById('nightStart');
+    if (ns && !ns.value) ns.focus();
+  }, 120);
 }
 function renderSleepDisplay() {
   var el = document.getElementById('sleepDisplay');
@@ -795,6 +891,7 @@ function loadSleepForm() {
   });
   if (sl.nightDur) { var nd = document.getElementById('nightDurDisplay'); if(nd) nd.textContent = formatHours(sl.nightDur); }
   if (sl.napDur)   { var nad= document.getElementById('napDurDisplay');   if(nad) nad.textContent= formatHours(sl.napDur); }
+  applySleepCheckFromLog();
 }
 
 // ── PIN / SECRET ──
@@ -1026,7 +1123,8 @@ function renderQuote() {
 // ── HERO ──
 function renderHero() {
   var prod=countProd(), streak=calcStreak();
-  var pct=Math.min(prod/GOAL_DAYS,1), circ=2*Math.PI*55;
+  var goal=getYearlyGoal();
+  var pct=Math.min(prod/goal,1), circ=2*Math.PI*55;
   document.getElementById('streakNum').textContent = streak;
   var subEl = document.getElementById('streakSub');
   if (subEl) {
@@ -1038,8 +1136,9 @@ function renderHero() {
   }
   document.getElementById('ringCount').textContent = prod;
   document.getElementById('pctStat').textContent   = Math.round(pct*100)+'%';
-  document.getElementById('remStat').textContent   = Math.max(0,GOAL_DAYS-prod);
+  document.getElementById('remStat').textContent   = Math.max(0,goal-prod);
   document.getElementById('dayStat').textContent   = daysSinceStart();
+  updateProductiveLabels();
   setTimeout(function(){ document.getElementById('ringFill').style.strokeDashoffset = circ*(1-pct); },120);
   var n=new Date();
   document.getElementById('topDate').textContent = n.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
@@ -1139,11 +1238,15 @@ function renderUserDisplay() {
 function openNameOverlay() {
   var ov = document.getElementById('nameOverlay');
   var inp = document.getElementById('nameInput');
+  var goalWrap = document.getElementById('onboardGoalWrap');
+  var goalInp = document.getElementById('yearlyGoalInput');
   if (inp) {
     inp.value = '';
     if (currentUser && currentUser.displayName) inp.value = currentUser.displayName;
     else if (state.profileName) inp.value = state.profileName;
   }
+  if (goalWrap) goalWrap.style.display = state.yearlyGoalLocked ? 'none' : 'block';
+  if (goalInp && !state.yearlyGoalLocked) goalInp.value = state.yearlyProductiveGoal || 300;
   if (ov) ov.className = 'secret-overlay';
   setTimeout(function() { if (inp) inp.focus(); }, 100);
 }
@@ -1159,10 +1262,84 @@ function saveDisplayName() {
   var name = inp.value.trim();
   if (!name) { showToast('Enter your name'); return; }
   state.profileName = name;
+  if (!state.yearlyGoalLocked) {
+    var goalInp = document.getElementById('yearlyGoalInput');
+    var yg = goalInp ? parseInt(goalInp.value, 10) : 300;
+    if (!yg || yg < 1 || yg > 365) { showToast('Enter yearly target (1–365)'); return; }
+    state.yearlyProductiveGoal = yg;
+    state.yearlyGoalLocked = true;
+    state.startDate = todayKey();
+  }
   saveState(state);
   renderUserDisplay();
+  renderHero();
   closeNameOverlay();
   showToast('Welcome, ' + getProfileFirstName() + '!');
+}
+
+function openSettings() {
+  if (!currentUser) return;
+  var ov = document.getElementById('settingsOverlay');
+  var nameInp = document.getElementById('settingsNameInput');
+  var thInp = document.getElementById('settingsThresholdInput');
+  var ygInp = document.getElementById('settingsYearlyGoalInput');
+  var ygNote = document.getElementById('settingsYearlyGoalNote');
+  var wtInp = document.getElementById('settingsWorkTitleInput');
+  var wxInp = document.getElementById('settingsWorkTextInput');
+  if (nameInp) nameInp.value = getProfileFullName();
+  if (thInp) thInp.value = getProductiveThreshold();
+  if (ygInp) {
+    ygInp.value = getYearlyGoal();
+    ygInp.disabled = !!state.yearlyGoalLocked;
+    ygInp.style.opacity = state.yearlyGoalLocked ? '0.6' : '1';
+  }
+  if (ygNote) {
+    ygNote.textContent = state.yearlyGoalLocked
+      ? 'Locked on first setup — cannot change.'
+      : 'Set once — cannot change after saving.';
+  }
+  if (wtInp) wtInp.value = getWorkGoalTitle();
+  if (wxInp) wxInp.value = getWorkGoalText();
+  if (ov) ov.className = 'secret-overlay';
+}
+
+function closeSettings() {
+  var ov = document.getElementById('settingsOverlay');
+  if (ov) ov.className = 'secret-overlay hidden';
+}
+
+function saveSettings() {
+  var nameInp = document.getElementById('settingsNameInput');
+  var thInp = document.getElementById('settingsThresholdInput');
+  var ygInp = document.getElementById('settingsYearlyGoalInput');
+  var wtInp = document.getElementById('settingsWorkTitleInput');
+  var wxInp = document.getElementById('settingsWorkTextInput');
+  if (nameInp) {
+    var name = nameInp.value.trim();
+    if (!name) { showToast('Enter your name'); return; }
+    state.profileName = name;
+  }
+  if (thInp) {
+    var th = parseInt(thInp.value, 10);
+    if (!th || th < 1 || th > CHECKS.length) { showToast('Checks needed: 1–' + CHECKS.length); return; }
+    state.productiveThreshold = th;
+  }
+  if (ygInp && !state.yearlyGoalLocked) {
+    var yg = parseInt(ygInp.value, 10);
+    if (!yg || yg < 1 || yg > 365) { showToast('Yearly target: 1–365'); return; }
+    state.yearlyProductiveGoal = yg;
+    state.yearlyGoalLocked = true;
+  }
+  if (wtInp) state.workGoalTitle = wtInp.value.trim() || DEFAULT_WORK_GOAL_TITLE;
+  if (wxInp) state.workGoalText = wxInp.value.trim() || DEFAULT_WORK_GOAL_TEXT;
+  saveState(state);
+  renderUserDisplay();
+  updateProductiveLabels();
+  renderHero();
+  renderChecklist();
+  if (document.getElementById('panel-tapan') && document.getElementById('panel-tapan').classList.contains('active')) renderTapan();
+  closeSettings();
+  showToast('Settings saved');
 }
 
 function promptDisplayNameIfNeeded() {
@@ -1251,6 +1428,7 @@ function saveDiary() {
 }
 
 function toggleCheck(id) {
+  if (id === 'sleep') { goToSleepLog(); return; }
   var k=todayKey();
   if(!state.days[k]) state.days[k]={checks:{},diary:{}};
   state.days[k].checks[id]=!state.days[k].checks[id];
@@ -1328,7 +1506,7 @@ function renderGoals() {
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">💪</span><span class="goal-title">Body Fat below 3%</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+(state.goals.bodyfat||0)+'%"></div></div><div class="goal-note">See Body tab for full tracking  <button onclick="switchTab(\'body\')" style="'+btnStyle+'">Open Body Tab</button></div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍔</span><span class="goal-title">No Junk Food</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noJunkDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noJunkDays+' / '+monthDays+' junk-free days this month</div></div>'+
     '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🏃</span><span class="goal-title">30 min Run</span><span class="goal-status '+(runDays>=monthDays?'done':'active')+'">'+(runDays>=monthDays?'Perfect':'Active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(runDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+runDays+' / '+monthDays+' run days this month (check Workout daily)</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">Daily Measures (need 6/'+CHECKS.length+')</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+c.name+'</span>';}).join('')+'</div></div>';
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">Daily Measures (need '+getProductiveThreshold()+'/'+CHECKS.length+')</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+c.name+'</span>';}).join('')+'</div></div>';
 }
 
 // ── BODY TAB ──
@@ -1464,15 +1642,15 @@ function saveBF(){
 // ── TAPAN ──
 function renderTapan(){
   var html='<div class="goal-card" style="border-color:var(--gold-mid);background:var(--gold-dim);margin-bottom:16px;">'+
-    '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">🚀 USA Goal = Impress Tapan</div>'+
-    '<div style="font-size:11px;color:var(--muted);line-height:1.6;">You are the only PM + PM at HeyBubba.ai/TruckX. Every day is an audition. Log what Tapan said, noticed, or assigned.</div></div>'+
+    '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">'+getWorkGoalTitle()+'</div>'+
+    '<div style="font-size:11px;color:var(--muted);line-height:1.6;">'+getWorkGoalText()+'</div></div>'+
     '<div class="goal-card" style="margin-bottom:14px;">'+
       '<div class="section-title" style="margin-bottom:10px;">Log Today</div>'+
       '<div style="display:flex;flex-direction:column;gap:8px;">'+
-        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">What he said / noticed</label>'+
+        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">What manager said/noticed</label>'+
           '<textarea id="tapan-said" rows="2" placeholder="e.g. Good PRD structure but needs more user data" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
         '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">What I did / built</label>'+
-          '<textarea id="tapan-did" rows="2" placeholder="e.g. Shipped dashboard v2 — he called it clean" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
+          '<textarea id="tapan-did" rows="2" placeholder="e.g. Shipped dashboard v2 — manager called it clean" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
         '<div style="display:flex;gap:8px;align-items:center;">'+
           '<label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;">Vibe</label>'+
           '<select id="tapan-vibe" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 10px;outline:none;">'+
@@ -1483,7 +1661,7 @@ function renderTapan(){
             '<option value="1">❌ Bad day</option>'+
           '</select></div>'+
       '</div>'+
-      '<button onclick="saveTapan()" style="width:100%;margin-top:10px;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">LOG TAPAN ENTRY</button>'+
+      '<button onclick="saveTapan()" style="width:100%;margin-top:10px;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">LOG WORK ENTRY</button>'+
     '</div>';
   if(state.tapanLog.length){
     var avgVibe=(state.tapanLog.reduce(function(a,e){return a+(+e.vibe||3);},0)/state.tapanLog.length).toFixed(1);
@@ -1512,7 +1690,7 @@ function saveTapan(){
   if(!said&&!did){showToast('Add at least one field');return;}
   state.tapanLog.push({date:todayKey(),said:said,did:did,vibe:vibe});
   saveState(state); renderTapan();
-  showToast('🚀 Tapan entry logged!');
+  showToast('Work entry logged!');
 }
 
 // ── HISTORY ──
@@ -2382,7 +2560,7 @@ function switchTab(id, scrollTargetId){
   currentSection = id;
   var home = document.getElementById('homeScreen');
   if (home) home.style.display = 'none';
-  var allTabs=['today','calendar','goals','body','tapan','money','private','history'];
+  var allTabs=['today','calendar','money','tapan','goals','body','private','history'];
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',allTabs[i]===id);});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   var panel=document.getElementById('panel-'+id);
@@ -2437,6 +2615,12 @@ function loadRemote() {
         remote.moneyView = local.moneyView || remote.moneyView || { range: 'month', search: '' };
         remote.appearance = local.appearance || remote.appearance || { mode: 'dark', accent: 'gold' };
         remote.profileName = remote.profileName || local.profileName || '';
+        remote.productiveThreshold = remote.productiveThreshold || local.productiveThreshold || 6;
+        remote.yearlyProductiveGoal = remote.yearlyProductiveGoal || local.yearlyProductiveGoal || 300;
+        remote.yearlyGoalLocked = !!(remote.yearlyGoalLocked || local.yearlyGoalLocked);
+        remote.startDate = remote.startDate || local.startDate || '2026-06-23';
+        remote.workGoalTitle = remote.workGoalTitle || local.workGoalTitle || DEFAULT_WORK_GOAL_TITLE;
+        remote.workGoalText = remote.workGoalText || local.workGoalText || DEFAULT_WORK_GOAL_TEXT;
         if (local.budgets) {
           remote.budgets = remote.budgets || {};
           Object.keys(local.budgets).forEach(function(k) {
@@ -2488,6 +2672,7 @@ function signIn() {
 }
 
 function signOut() {
+  closeSettings();
   auth.signOut().then(function(){
     currentUser = null;
     document.getElementById('loginBtn').style.display = 'block';
@@ -2498,6 +2683,7 @@ function signOut() {
 }
 
 function renderAll() {
+  updateProductiveLabels();
   renderHero(); renderMiniGoals(); renderChecklist();
   loadSleepForm(); renderSleepDisplay(); renderTodoWidget(); renderFrontTodo(); renderFrontMoney();
   if (currentSection === 'home') goHome();
@@ -2537,7 +2723,7 @@ function scheduleReminders() {
 
     // 7:30 AM — log sleep
     if (h === 7 && m === 30) {
-      sendNotification('Good morning Aryan!', 'Day ' + daysSinceStart() + ' — log your sleep hours from last night.');
+      sendNotification('Good morning ' + getProfileFirstName() + '!', 'Day ' + daysSinceStart() + ' — log your sleep hours from last night.');
     }
     // 1:00 PM — healthy lunch
     if (h === 13 && m === 0) {
@@ -2553,11 +2739,11 @@ function scheduleReminders() {
     }
     // 9:00 PM — log day reminder
     if (h === 21 && m === 0 && !entry.ts) {
-      sendNotification('Log your day Aryan!', doneCount + '/8 checks done. Fill your diary before you sleep.');
+      sendNotification('Log your day ' + getProfileFirstName() + '!', doneCount + '/' + CHECKS.length + ' checks done. Fill your diary before you sleep.');
     }
     // 10:00 PM — final nudge
-    if (h === 22 && m === 0 && doneCount < 6) {
-      sendNotification('Still time!', 'Only ' + doneCount + '/8 checks. Need 6 for a productive day.');
+    if (h === 22 && m === 0 && doneCount < getProductiveThreshold()) {
+      sendNotification('Still time!', 'Only ' + doneCount + '/' + CHECKS.length + ' checks. Need ' + getProductiveThreshold() + ' for a productive day.');
     }
   }, 60000);
 }

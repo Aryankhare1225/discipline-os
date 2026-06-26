@@ -30,11 +30,22 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--black);color:var(--text);font-family:var(--sans);min-height:100vh;padding:0 0 80px 0;}
 
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--topbar);backdrop-filter:blur(14px);z-index:100;}
+  .topbar{display:flex;align-items:center;gap:12px;padding:10px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--topbar);backdrop-filter:blur(14px);z-index:100;}
+  .topbar-left{flex-shrink:0;min-width:120px;}
+  .topbar-nav{flex:1;display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0;padding:2px 0;}
+  .topbar-nav::-webkit-scrollbar{display:none;}
+  .topbar-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .topbar-actions{display:flex;align-items:center;gap:8px;}
   .logo-name{font-family:var(--mono);font-size:15px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;font-weight:700;cursor:pointer;transition:opacity .15s;}
   .logo-name:hover{opacity:0.8;}
   .logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase;}
-  .date-badge{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;}
+  .date-badge{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;white-space:nowrap;}
+  .theme-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;flex-shrink:0;}
+  .theme-btn:hover,.theme-btn.open{border-color:var(--gold-mid);background:var(--gold-dim);}
+  .theme-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .theme-popover{position:fixed;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 10px 40px rgba(0,0,0,0.35);min-width:230px;display:none;}
+  .theme-popover.open{display:block;}
+  .theme-popover-title{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px;}
 
   .hero-row{display:flex;align-items:center;justify-content:center;gap:0;padding:28px 40px 16px;max-width:900px;margin:0 auto;width:100%;}
   .hero-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;}
@@ -79,9 +90,7 @@
   .mini-goal-bar{height:3px;background:var(--gold);border-radius:3px;transition:width 0.6s ease;}
   .mini-goal-val{font-family:var(--mono);font-size:9px;color:var(--muted);}
 
-  .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 40px;gap:0;margin-top:0;overflow-x:auto;scrollbar-width:none;max-width:900px;margin-left:auto;margin-right:auto;}
-  .theme-bar{max-width:900px;margin:12px auto 0;padding:0 40px;width:100%;}
-  .theme-bar-inner{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;}
+  .tabs{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;}
   .theme-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
   .theme-row:last-child{margin-bottom:0;}
   .theme-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;min-width:52px;}
@@ -96,8 +105,8 @@
   .cal-stat-title{font-size:11px;font-weight:600;margin-bottom:4px;}
   .cal-stat-val{font-family:var(--mono);font-size:13px;color:var(--gold);}
   .tabs::-webkit-scrollbar{display:none;}
-  .tab{padding:11px 15px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;flex-shrink:0;}
-  .tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .tab{padding:6px 10px;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);cursor:pointer;border:none;border-radius:6px;transition:all 0.2s;background:transparent;white-space:nowrap;flex-shrink:0;}
+  .tab.active{color:var(--gold);background:var(--gold-dim);}
 
   .panel{display:none;padding:18px 40px;max-width:900px;margin:0 auto;width:100%;}
   .panel.active{display:block;}
@@ -172,8 +181,8 @@
   .toast.show{transform:translateX(-50%) translateY(0);}
   .divider{height:1px;background:var(--border);margin:18px 0;}
 
-  @media(max-width:380px){.day-dot{width:33px;height:33px;}.days-header span{width:33px;}.goals-grid{padding:12px 14px 0;}.hero-row{padding:20px 16px 12px;gap:0;}.hero-divider{margin:0 16px;}.panel{padding:14px 16px;}.topbar{padding:14px 16px;}.tabs{padding:0 16px;}.theme-bar{padding:0 16px;}.quote-banner{margin:10px 16px 0;width:auto;}}
-  @media(max-width:600px){.hero-row{padding:20px 20px 12px;}.hero-divider{margin:0 20px;}.panel{padding:16px 20px;}.topbar{padding:14px 20px;}.tabs{padding:0 20px;}.theme-bar{padding:0 20px;}.goals-grid{padding:12px 20px 0;}.quote-banner{margin:10px 20px 0;}}
+  @media(max-width:380px){.day-dot{width:33px;height:33px;}.days-header span{width:33px;}.goals-grid{padding:12px 14px 0;}.hero-row{padding:20px 16px 12px;gap:0;}.hero-divider{margin:0 16px;}.panel{padding:14px 16px;}.topbar{padding:10px 12px;gap:8px;}.topbar-left{min-width:90px;}.logo-name{font-size:12px;}.topbar-nav .tab{padding:5px 7px;font-size:9px;}.quote-banner{margin:10px 16px 0;width:auto;}}
+  @media(max-width:600px){.hero-row{padding:20px 20px 12px;}.hero-divider{margin:0 20px;}.panel{padding:16px 20px;}.topbar{padding:10px 16px;}.goals-grid{padding:12px 20px 0;}.quote-banner{margin:10px 20px 0;}}
 
   .secret-overlay{position:fixed;inset:0;background:var(--black);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
   .secret-overlay.hidden{display:none;}
@@ -202,34 +211,37 @@
 <body data-mode="dark" data-accent="gold">
 
 <div class="topbar">
-  <div>
+  <div class="topbar-left">
     <div class="logo-name" onclick="goHome()" title="Go to Home">Aryan Khare</div>
     <div class="logo-sub">Discipline OS &middot; 2026</div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <button id="loginBtn" onclick="signIn()" style="display:none;font-family:monospace;font-size:10px;background:#c9a84c;color:#000;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">Sign in</button>
-    <div id="userBadge" style="display:none;font-family:monospace;font-size:10px;color:#666;cursor:pointer;" onclick="signOut()">Sign out</div>
+  <div class="topbar-nav tabs">
+    <button class="tab" onclick="switchTab('today')">Today</button>
+    <button class="tab" onclick="switchTab('calendar')">Calendar</button>
+    <button class="tab" onclick="switchTab('goals')">Goals</button>
+    <button class="tab" onclick="switchTab('body')">Body</button>
+    <button class="tab" onclick="switchTab('tapan')">Tapan</button>
+    <button class="tab" onclick="switchTab('money')">Money</button>
+    <button class="tab" onclick="switchTab('private')">&#128274;</button>
+    <button class="tab" onclick="switchTab('history')">History</button>
+  </div>
+  <div class="topbar-right">
     <div class="date-badge" id="topDate"></div>
+    <div class="topbar-actions">
+      <button class="theme-btn" id="themeBtn" onclick="toggleThemePopover(event)" title="Appearance" aria-label="Appearance">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button id="loginBtn" onclick="signIn()" style="display:none;font-family:monospace;font-size:10px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;">Sign in</button>
+      <div id="userBadge" style="display:none;font-family:monospace;font-size:10px;color:var(--muted);cursor:pointer;" onclick="signOut()">Sign out</div>
+    </div>
   </div>
 </div>
 
+<div id="themePopover" class="theme-popover"></div>
+
 <div id="syncStatus" style="display:none;text-align:center;font-family:monospace;font-size:10px;padding:6px;background:var(--gold-dim);color:var(--gold);letter-spacing:.08em;"></div>
 
-<div class="tabs">
-  <button class="tab" onclick="switchTab('today')">Today</button>
-  <button class="tab" onclick="switchTab('calendar')">Calendar</button>
-  <button class="tab" onclick="switchTab('goals')">Goals</button>
-  <button class="tab" onclick="switchTab('body')">Body</button>
-  <button class="tab" onclick="switchTab('tapan')">Tapan</button>
-  <button class="tab" onclick="switchTab('money')">Money</button>
-  <button class="tab" onclick="switchTab('private')">&#128274;</button>
-  <button class="tab" onclick="switchTab('history')">History</button>
-</div>
-
 <div id="homeScreen">
-  <div class="theme-bar" id="themeBar"></div>
-
-<!-- HERO: Ring + Streak side by side -->
 <div class="hero-row">
   <!-- Left: Ring -->
   <div class="hero-ring-wrap">
@@ -580,7 +592,7 @@ function setAppearanceMode(mode) {
   state.appearance.mode = mode;
   saveState(state);
   applyAppearance();
-  renderThemeBar();
+  renderThemePopover();
 }
 
 function setAppearanceAccent(accent) {
@@ -588,42 +600,84 @@ function setAppearanceAccent(accent) {
   state.appearance.accent = accent;
   saveState(state);
   applyAppearance();
-  renderThemeBar();
+  renderThemePopover();
 }
 
-function renderThemeBar() {
-  var el = document.getElementById('themeBar');
+var themePopoverOpen = false;
+
+function renderThemePopover() {
+  var el = document.getElementById('themePopover');
   if (!el) return;
   var app = state.appearance || { mode: 'dark', accent: 'gold' };
   var modeBtn = function(m, label) {
     return '<button class="theme-chip' + (app.mode === m ? ' active' : '') + '" onclick="setAppearanceMode(\'' + m + '\')">' + label + '</button>';
   };
-  var accentBtn = function(a, label, cls) {
+  var accentBtn = function(a, label) {
     return '<button class="theme-chip accent-' + a + (app.accent === a ? ' active' : '') + '" onclick="setAppearanceAccent(\'' + a + '\')">' + label + '</button>';
   };
   el.innerHTML =
-    '<div class="theme-bar-inner">' +
-      '<div class="theme-row"><span class="theme-label">Mode</span>' +
-        modeBtn('dark', 'Dark') + modeBtn('light', 'Light') +
-      '</div>' +
-      '<div class="theme-row"><span class="theme-label">Color</span>' +
-        accentBtn('gold', 'Gold', 'gold') +
-        accentBtn('ocean', 'Ocean', 'ocean') +
-        accentBtn('forest', 'Forest', 'forest') +
-        accentBtn('rose', 'Rose', 'rose') +
-      '</div>' +
+    '<div class="theme-popover-title">Appearance</div>' +
+    '<div class="theme-row"><span class="theme-label">Mode</span>' +
+      modeBtn('dark', 'Dark') + modeBtn('light', 'Light') +
+    '</div>' +
+    '<div class="theme-row"><span class="theme-label">Color</span>' +
+      accentBtn('gold', 'Gold') +
+      accentBtn('ocean', 'Ocean') +
+      accentBtn('forest', 'Forest') +
+      accentBtn('rose', 'Rose') +
     '</div>';
 }
+
+function positionThemePopover() {
+  var btn = document.getElementById('themeBtn');
+  var pop = document.getElementById('themePopover');
+  if (!btn || !pop) return;
+  var r = btn.getBoundingClientRect();
+  pop.style.top = (r.bottom + 8) + 'px';
+  pop.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+  pop.style.left = 'auto';
+}
+
+function toggleThemePopover(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  themePopoverOpen = !themePopoverOpen;
+  var pop = document.getElementById('themePopover');
+  var btn = document.getElementById('themeBtn');
+  if (!pop) return;
+  if (themePopoverOpen) {
+    renderThemePopover();
+    pop.classList.add('open');
+    if (btn) btn.classList.add('open');
+    positionThemePopover();
+  } else {
+    closeThemePopover();
+  }
+}
+
+function closeThemePopover() {
+  themePopoverOpen = false;
+  var pop = document.getElementById('themePopover');
+  var btn = document.getElementById('themeBtn');
+  if (pop) pop.classList.remove('open');
+  if (btn) btn.classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!themePopoverOpen) return;
+  var pop = document.getElementById('themePopover');
+  var btn = document.getElementById('themeBtn');
+  if (pop && btn && !pop.contains(e.target) && !btn.contains(e.target)) closeThemePopover();
+});
 
 var currentSection = 'home';
 
 function goHome() {
   currentSection = 'home';
+  closeThemePopover();
   var home = document.getElementById('homeScreen');
   if (home) home.style.display = 'block';
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-  renderThemeBar();
   renderHero();
   renderQuote();
   renderFrontTodo();
@@ -2004,21 +2058,62 @@ function renderMoney() {
   var balanceNames = Object.keys(splitBalances).filter(function(n) { return splitBalances[n] > 0; });
   var analysisNotes = renderExpenseAnalysis(rows);
 
-  var html =
-    '<div class="goal-card" style="margin-bottom:14px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
-        '<span style="font-size:13px;font-weight:600;">Expense View</span>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-          '<button style="' + rangeBtnStyle(range === 'today') + '" onclick="setMoneyRange(\'today\')">Today</button>' +
-          '<button style="' + rangeBtnStyle(range === 'week') + '" onclick="setMoneyRange(\'week\')">Week</button>' +
-          '<button style="' + rangeBtnStyle(range === 'month') + '" onclick="setMoneyRange(\'month\')">Month</button>' +
-          '<button style="' + rangeBtnStyle(range === 'all') + '" onclick="setMoneyRange(\'all\')">All</button>' +
-        '</div>' +
-      '</div>' +
-      '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="Search tag, amount, note, date, friend..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;margin-bottom:8px;" oninput="onExpenseSearch()">' +
-      '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);">' + dr.label + ' · ' + rows.length + ' entries · Rs ' + total.toLocaleString('en-IN') + ' (your share)</div>' +
+  var logExpenseBlock =
+    '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 10px;">Log new</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="catButtons">' +
+      cats.map(function(c) {
+        return '<button onclick="selectCat(\'' + c.id + '\')" id="catBtn-' + c.id + '" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;">' + c.emoji + ' ' + c.label + '</button>';
+      }).join('') +
     '</div>' +
+    '<input type="hidden" id="expCat" value="food">' +
+    '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+      '<div style="position:relative;flex:1;">' +
+        '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;">Rs</span>' +
+        '<input id="expAmount" type="number" placeholder="Amount" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px 10px 30px;outline:none;" onkeydown="if(event.key===\'Enter\')addExpense()" oninput="updateSplitPreview();renderSplitInputs();">' +
+      '</div>' +
+      '<input id="expNote" type="text" placeholder="Note (optional)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;">' +
+      '<input type="checkbox" id="expSplit" onchange="toggleSplitPanel()" style="accent-color:var(--gold);">' +
+      ' Split with friends' +
+    '</label>' +
+    '<div id="splitPanel" style="display:none;margin-bottom:10px;padding:10px;background:var(--black);border:1px solid var(--border);border-radius:8px;">' +
+      ((state.friends && state.friends.length) ?
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
+          state.friends.map(function(name, i) {
+            return '<label style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;">' +
+              '<input type="checkbox" id="split-friend-' + i + '" onchange="renderSplitInputs();updateSplitPreview()" style="accent-color:var(--gold);">' +
+              name +
+            '</label>';
+          }).join('') +
+        '</div>'
+      : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add friends above first.</div>') +
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">' +
+        '<label style="font-size:11px;color:var(--muted);">Mode</label>' +
+        '<select id="splitMode" onchange="onSplitModeChange()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;">' +
+          '<option value="equal">Equal split</option>' +
+          '<option value="custom">Custom % / amount</option>' +
+        '</select>' +
+        '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;">' +
+          '<input type="checkbox" id="splitIncludeMe" checked onchange="renderSplitInputs();updateSplitPreview()" style="accent-color:var(--gold);">' +
+          ' Include me' +
+        '</label>' +
+      '</div>' +
+      '<div id="splitInputsArea"></div>' +
+      '<div id="splitValidation" style="font-size:11px;color:#e05252;margin-top:6px;"></div>' +
+      '<div id="splitPreview" style="font-size:11px;color:var(--gold);line-height:1.5;margin-top:6px;"></div>' +
+    '</div>' +
+    '<button onclick="addExpense()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">ADD EXPENSE</button>';
 
+  var expenseListBlock = rows.length ?
+    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">' +
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Entries</div>' +
+      rows.slice(0, 100).map(function(row) { return renderExpenseRow(row); }).join('') +
+      (rows.length > 100 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">Showing latest 100 of ' + rows.length + ' entries</div>' : '') +
+    '</div>'
+    : '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">No expenses match this view.</div>';
+
+  var html =
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
       '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Analysis</div>' +
       analysisNotes.map(function(n) {
@@ -2056,54 +2151,6 @@ function renderMoney() {
       '</div>'
     : '') +
 
-    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
-      '<div class="section-title" style="margin-bottom:10px;">Log Expense</div>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="catButtons">' +
-        cats.map(function(c) {
-          return '<button onclick="selectCat(\'' + c.id + '\')" id="catBtn-' + c.id + '" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;">' + c.emoji + ' ' + c.label + '</button>';
-        }).join('') +
-      '</div>' +
-      '<input type="hidden" id="expCat" value="food">' +
-      '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
-        '<div style="position:relative;flex:1;">' +
-          '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;">Rs</span>' +
-          '<input id="expAmount" type="number" placeholder="Amount" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px 10px 30px;outline:none;" onkeydown="if(event.key===\'Enter\')addExpense()" oninput="updateSplitPreview();renderSplitInputs();">' +
-        '</div>' +
-        '<input id="expNote" type="text" placeholder="Note (optional)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">' +
-      '</div>' +
-      '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;">' +
-        '<input type="checkbox" id="expSplit" onchange="toggleSplitPanel()" style="accent-color:var(--gold);">' +
-        ' Split with friends' +
-      '</label>' +
-      '<div id="splitPanel" style="display:none;margin-bottom:10px;padding:10px;background:var(--black);border:1px solid var(--border);border-radius:8px;">' +
-        ((state.friends && state.friends.length) ?
-          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">' +
-            state.friends.map(function(name, i) {
-              return '<label style="display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;">' +
-                '<input type="checkbox" id="split-friend-' + i + '" onchange="renderSplitInputs();updateSplitPreview()" style="accent-color:var(--gold);">' +
-                name +
-              '</label>';
-            }).join('') +
-          '</div>'
-        : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add friends above first.</div>') +
-        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">' +
-          '<label style="font-size:11px;color:var(--muted);">Mode</label>' +
-          '<select id="splitMode" onchange="onSplitModeChange()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;">' +
-            '<option value="equal">Equal split</option>' +
-            '<option value="custom">Custom % / amount</option>' +
-          '</select>' +
-          '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;">' +
-            '<input type="checkbox" id="splitIncludeMe" checked onchange="renderSplitInputs();updateSplitPreview()" style="accent-color:var(--gold);">' +
-            ' Include me' +
-          '</label>' +
-        '</div>' +
-        '<div id="splitInputsArea"></div>' +
-        '<div id="splitValidation" style="font-size:11px;color:#e05252;margin-top:6px;"></div>' +
-        '<div id="splitPreview" style="font-size:11px;color:var(--gold);line-height:1.5;margin-top:6px;"></div>' +
-      '</div>' +
-      '<button onclick="addExpense()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">ADD EXPENSE</button>' +
-    '</div>' +
-
     '<div class="goal-card" style="margin-bottom:14px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
         '<span style="font-size:13px;font-weight:600;">Budget Overview — ' + dr.label + '</span>' +
@@ -2133,14 +2180,6 @@ function renderMoney() {
         '</div>';
       }).join('') +
     '</div>' +
-
-    (rows.length ?
-      '<div class="goal-card" style="margin-bottom:14px;">' +
-        '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">Expense Log — ' + dr.label + '</div>' +
-        rows.slice(0, 100).map(function(row) { return renderExpenseRow(row); }).join('') +
-        (rows.length > 100 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">Showing latest 100 of ' + rows.length + ' entries</div>' : '') +
-      '</div>'
-    : '<div class="goal-card" style="margin-bottom:14px;"><div style="font-size:12px;color:var(--muted);">No expenses match this view. Try All Time or clear search.</div></div>') +
 
     '<div class="goal-card" style="margin-bottom:14px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:6px;" onclick="toggleBudgetSettings()">' +
@@ -2177,6 +2216,22 @@ function renderMoney() {
           '</div>' +
         '</div>' +
       '</div>' +
+    '</div>' +
+
+    '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
+        '<span style="font-size:13px;font-weight:600;">Expenses</span>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<button style="' + rangeBtnStyle(range === 'today') + '" onclick="setMoneyRange(\'today\')">Today</button>' +
+          '<button style="' + rangeBtnStyle(range === 'week') + '" onclick="setMoneyRange(\'week\')">Week</button>' +
+          '<button style="' + rangeBtnStyle(range === 'month') + '" onclick="setMoneyRange(\'month\')">Month</button>' +
+          '<button style="' + rangeBtnStyle(range === 'all') + '" onclick="setMoneyRange(\'all\')">All</button>' +
+        '</div>' +
+      '</div>' +
+      '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="Search tag, amount, note, date, friend..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;margin-bottom:8px;" oninput="onExpenseSearch()">' +
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px;">' + dr.label + ' · ' + rows.length + ' entries · Rs ' + total.toLocaleString('en-IN') + ' (your share)</div>' +
+      logExpenseBlock +
+      expenseListBlock +
     '</div>';
 
   el.innerHTML = html;
@@ -2210,6 +2265,7 @@ function toggleBudgetSettings() {
 }
 
 function switchTab(id){
+  closeThemePopover();
   if(id==='private'){
     if(!PIN_UNLOCKED){ openPinOverlay(); return; }
     renderPrivate();
@@ -2409,6 +2465,7 @@ auth.onAuthStateChanged(function(user) {
 renderQuote();
 rolloverTodos();
 applyAppearance();
+renderThemePopover();
 goHome();
 requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';

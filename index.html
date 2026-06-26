@@ -1266,6 +1266,70 @@ function getMonthExpenses(monthKey) {
   return all;
 }
 
+function expenseEntryKey(e) {
+  return (e.cat || '') + '|' + (e.amount || 0) + '|' + (e.time || '') + '|' + (e.note || '');
+}
+
+function mergeExpenseLogs(localExp, remoteExp) {
+  localExp = localExp || {};
+  remoteExp = remoteExp || {};
+  var merged = {};
+  var keys = {};
+  Object.keys(localExp).forEach(function(k) { keys[k] = 1; });
+  Object.keys(remoteExp).forEach(function(k) { keys[k] = 1; });
+  Object.keys(keys).forEach(function(k) {
+    var seen = {};
+    var list = [];
+    (remoteExp[k] || []).concat(localExp[k] || []).forEach(function(e) {
+      var id = expenseEntryKey(e);
+      if (!seen[id]) { seen[id] = 1; list.push(e); }
+    });
+    if (list.length) merged[k] = list;
+  });
+  return merged;
+}
+
+function mergeFriends(localFriends, remoteFriends) {
+  var map = {};
+  (remoteFriends || []).forEach(function(n) { if (n) map[n] = 1; });
+  (localFriends || []).forEach(function(n) { if (n) map[n] = 1; });
+  return Object.keys(map);
+}
+
+function getMonthExpenseRows(monthKey) {
+  if (!state.expenses) return [];
+  var rows = [];
+  Object.keys(state.expenses).sort().reverse().forEach(function(dateKey) {
+    if (dateKey.indexOf(monthKey) !== 0) return;
+    (state.expenses[dateKey] || []).forEach(function(e, i) {
+      rows.push({ dateKey: dateKey, idx: i, entry: e });
+    });
+  });
+  return rows;
+}
+
+function renderExpenseRow(row) {
+  var e = row.entry;
+  var cat = EXPENSE_CATEGORIES.filter(function(c){ return c.id === e.cat; })[0] || { emoji: '📦', label: e.cat };
+  var splitTxt = formatSplitSummary(e);
+  var d = new Date(row.dateKey + 'T00:00:00');
+  var ds = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">' +
+    '<span style="font-size:16px;">' + cat.emoji + '</span>' +
+    '<div style="flex:1;">' +
+      '<div style="font-size:12px;font-weight:500;">' + cat.label + (e.note ? ' — ' + e.note : '') + '</div>' +
+      '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);">' + ds + ' · ' + e.time + (splitTxt ? ' · ' + splitTxt : '') + '</div>' +
+    '</div>' +
+    '<div style="text-align:right;">' +
+      (e.split && e.split.enabled ?
+        '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:line-through;">Rs ' + (e.amount || 0).toLocaleString('en-IN') + '</div>' +
+        '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + expenseMyAmount(e).toLocaleString('en-IN') + '</span>'
+      : '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + (e.amount || 0).toLocaleString('en-IN') + '</span>') +
+    '</div>' +
+    '<button onclick="deleteExpense(\'' + row.dateKey + '\',' + row.idx + ')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">x</button>' +
+  '</div>';
+}
+
 function getCategoryTotal(expenses, catId) {
   return expenses
     .filter(function(e) { return e.cat === catId; })
@@ -1459,6 +1523,7 @@ function renderMoney() {
   var overallColor = overallPct > 90 ? '#e05252' : overallPct > 70 ? '#f0a500' : 'var(--gold)';
 
   var todayExp = (state.expenses && state.expenses[todayKey()]) ? state.expenses[todayKey()] : [];
+  var monthRows = getMonthExpenseRows(mKey);
   var splitBalances = getSplitBalances();
   var balanceNames = Object.keys(splitBalances).filter(function(n){ return splitBalances[n] > 0; });
 
@@ -1562,7 +1627,15 @@ function renderMoney() {
       }).join('') +
     '</div>' +
 
-    (todayExp.length ? 
+    (monthRows.length ?
+      '<div class="goal-card" style="margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">Expense Log — ' + mKey + '</div>' +
+        monthRows.slice(0, 50).map(function(row) { return renderExpenseRow(row); }).join('') +
+        (monthRows.length > 50 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">Showing latest 50 of ' + monthRows.length + ' entries</div>' : '') +
+      '</div>'
+    : '<div class="goal-card" style="margin-bottom:14px;"><div style="font-size:12px;color:var(--muted);">No expenses logged this month yet.</div></div>') +
+
+    (todayExp.length ?
       '<div class="goal-card" style="margin-bottom:14px;">' +
         '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">Today\'s Expenses</div>' +
         todayExp.map(function(e, i) {
@@ -1686,8 +1759,16 @@ function loadRemote() {
         if (!remote.expenses)  remote.expenses  = {};
         if (!remote.budgets)   remote.budgets   = { rent: 15000, electricity: 1500, food: 8000, maid: 2000, laundry: 1000, commute: 2000, cafe: 2000, recharge: 500, shopping: 3000, other: 2000 };
         if (!remote.friends)   remote.friends   = [];
+        remote.expenses = mergeExpenseLogs(local.expenses, remote.expenses);
+        remote.friends = mergeFriends(local.friends, remote.friends);
+        if (local.budgets) {
+          remote.budgets = remote.budgets || {};
+          Object.keys(local.budgets).forEach(function(k) {
+            if (!remote.budgets[k] && local.budgets[k]) remote.budgets[k] = local.budgets[k];
+          });
+        }
         state = remote;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        saveState(state);
         renderAll();
         showSync('Up to date');
       } else {

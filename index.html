@@ -577,6 +577,7 @@ else {
 if (!state.friends)    state.friends   = [];
 if (!state.customCategories) state.customCategories = [];
 if (!state.expenseArchive) state.expenseArchive = [];
+if (!state.deletedExpenseKeys) state.deletedExpenseKeys = [];
 if (!state.moneyView) state.moneyView = { range: 'month', search: '', searchOpen: false, friendsOpen: false };
 if (!state.hiddenBudgetTags) state.hiddenBudgetTags = [];
 if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
@@ -1869,9 +1870,39 @@ function expenseEntryKey(e) {
   return (e.cat || '') + '|' + (e.amount || 0) + '|' + (e.time || '') + '|' + (e.note || '');
 }
 
+function expenseArchiveKey(dateKey, entry) {
+  return dateKey + '|' + expenseEntryKey(entry);
+}
+
+function isExpenseDeletedByKey(key) {
+  return !!(state.deletedExpenseKeys && state.deletedExpenseKeys.indexOf(key) !== -1);
+}
+
+function isExpenseDeleted(dateKey, entry) {
+  return isExpenseDeletedByKey(expenseArchiveKey(dateKey, entry));
+}
+
+function markExpenseDeleted(dateKey, entry) {
+  if (!entry) return;
+  if (!state.deletedExpenseKeys) state.deletedExpenseKeys = [];
+  var key = expenseArchiveKey(dateKey, entry);
+  if (state.deletedExpenseKeys.indexOf(key) === -1) state.deletedExpenseKeys.push(key);
+}
+
+function removeExpenseFromArchive(dateKey, entry) {
+  if (!state.expenseArchive || !entry) return;
+  var key = expenseArchiveKey(dateKey, entry);
+  var next = [];
+  state.expenseArchive.forEach(function(item) {
+    if (item.key !== key) next.push(item);
+  });
+  state.expenseArchive = next;
+}
+
 function archiveExpenseEntry(dateKey, entry) {
+  if (!entry || isExpenseDeleted(dateKey, entry)) return;
   if (!state.expenseArchive) state.expenseArchive = [];
-  var key = dateKey + '|' + expenseEntryKey(entry);
+  var key = expenseArchiveKey(dateKey, entry);
   var exists = false;
   state.expenseArchive.forEach(function(item) {
     if (item.key === key) exists = true;
@@ -1895,6 +1926,7 @@ function rebuildExpensesFromArchive() {
   var changed = false;
   state.expenseArchive.forEach(function(item) {
     if (!item.dateKey || !item.entry) return;
+    if (isExpenseDeletedByKey(item.key)) return;
     if (!state.expenses[item.dateKey]) state.expenses[item.dateKey] = [];
     var exists = false;
     state.expenses[item.dateKey].forEach(function(e) {
@@ -1919,6 +1951,7 @@ function mergeExpenseLogs(localExp, remoteExp) {
     var seen = {};
     var list = [];
     (remoteExp[k] || []).concat(localExp[k] || []).forEach(function(e) {
+      if (isExpenseDeleted(k, e)) return;
       var id = expenseEntryKey(e);
       if (!seen[id]) { seen[id] = 1; list.push(e); }
     });
@@ -1932,11 +1965,19 @@ function mergeExpenseArchive(localArc, remoteArc) {
   remoteArc = remoteArc || [];
   var map = {};
   remoteArc.concat(localArc).forEach(function(item) {
-    if (item && item.key) map[item.key] = item;
+    if (item && item.key && !isExpenseDeletedByKey(item.key)) map[item.key] = item;
   });
   var out = [];
   Object.keys(map).forEach(function(k) { out.push(map[k]); });
   return out;
+}
+
+function mergeDeletedExpenseKeys(localKeys, remoteKeys) {
+  var map = {};
+  (remoteKeys || []).concat(localKeys || []).forEach(function(k) {
+    if (k) map[k] = 1;
+  });
+  return Object.keys(map);
 }
 
 function mergeFriends(localFriends, remoteFriends) {
@@ -1984,6 +2025,11 @@ function filterExpenseRows(rows, query) {
   });
 }
 
+function normalizeExpenseDash(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/\u2014/g, '-').replace(/\u2013/g, '-').replace(/--+/g, '-');
+}
+
 function renderExpenseEditRow(row) {
   var e = row.entry;
   var cats = getAllCategories();
@@ -2002,7 +2048,7 @@ function renderExpenseEditRow(row) {
       '<div><label style="font-size:10px;color:var(--muted);">Time</label>' +
         '<input id="editExpTime" type="time" value="' + expenseTimeToInput(e.time) + '" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px;outline:none;"></div>' +
     '</div>' +
-    '<input id="editExpNote" type="text" value="' + (e.note || '').replace(/"/g, '&quot;') + '" placeholder="Note (optional)" style="width:100%;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
+    '<input id="editExpNote" type="text" value="' + normalizeExpenseDash(e.note || '').replace(/"/g, '&quot;') + '" placeholder="Note (optional)" style="width:100%;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
     '<div style="display:flex;gap:8px;">' +
       '<button onclick="saveExpenseEdit()" style="flex:1;padding:10px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">Save</button>' +
       '<button onclick="cancelExpenseEdit()" style="flex:1;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">Cancel</button>' +
@@ -2019,10 +2065,11 @@ function renderExpenseRow(row) {
   var splitTxt = formatSplitSummary(e);
   var d = new Date(row.dateKey + 'T00:00:00');
   var ds = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-  return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">' +
+  var noteText = normalizeExpenseDash(e.note);
+  return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;" ondblclick="editExpense(\'' + row.dateKey + '\',' + row.idx + ')" title="Double-click to edit">' +
     '<span style="font-size:16px;">' + cat.emoji + '</span>' +
     '<div style="flex:1;">' +
-      '<div style="font-size:12px;font-weight:500;">' + cat.label + (e.note ? ' — ' + e.note : '') + '</div>' +
+      '<div style="font-size:12px;font-weight:500;">' + cat.label + (noteText ? ' - ' + noteText : '') + '</div>' +
       '<div style="font-family:var(--mono);font-size:10px;color:var(--muted);">' + ds + ' · ' + e.time + (splitTxt ? ' · ' + splitTxt : '') + '</div>' +
     '</div>' +
     '<div style="text-align:right;">' +
@@ -2031,8 +2078,7 @@ function renderExpenseRow(row) {
         '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + expenseMyAmount(e).toLocaleString('en-IN') + '</span>'
       : '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + (e.amount || 0).toLocaleString('en-IN') + '</span>') +
     '</div>' +
-    '<button onclick="editExpense(\'' + row.dateKey + '\',' + row.idx + ')" style="background:none;border:none;color:var(--gold);font-size:12px;cursor:pointer;padding:0 4px;" title="Edit">✎</button>' +
-    '<button onclick="deleteExpense(\'' + row.dateKey + '\',' + row.idx + ')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Delete">x</button>' +
+    '<button onclick="event.stopPropagation();deleteExpense(\'' + row.dateKey + '\',' + row.idx + ')" ondblclick="event.stopPropagation();" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Delete">x</button>' +
   '</div>';
 }
 
@@ -2403,7 +2449,7 @@ function addExpense() {
   var entry = {
     cat: cat.value,
     amount: +amount.value,
-    note: note ? note.value.trim() : '',
+    note: note ? normalizeExpenseDash(note.value.trim()) : '',
     time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
   };
   var splitCb = document.getElementById('expSplit');
@@ -2433,12 +2479,17 @@ function addExpense() {
 
 function deleteExpense(dateKey, idx) {
   if (!state.expenses[dateKey]) return;
+  var entry = state.expenses[dateKey][idx];
+  if (!entry) return;
   if (moneyEditTarget && moneyEditTarget.dateKey === dateKey && moneyEditTarget.idx === idx) moneyEditTarget = null;
+  markExpenseDeleted(dateKey, entry);
+  removeExpenseFromArchive(dateKey, entry);
   state.expenses[dateKey].splice(idx, 1);
   if (!state.expenses[dateKey].length) delete state.expenses[dateKey];
   saveState(state);
   renderMoney(true);
   renderFrontMoney();
+  showToast('Expense deleted');
 }
 
 function editExpense(dateKey, idx) {
@@ -2469,7 +2520,7 @@ function saveExpenseEdit() {
   var updated = {
     cat: catEl ? catEl.value : entry.cat,
     amount: amount,
-    note: noteEl ? noteEl.value.trim() : '',
+    note: noteEl ? normalizeExpenseDash(noteEl.value.trim()) : '',
     time: timeEl && timeEl.value ? expenseTimeFromInput(timeEl.value) : (entry.time || '')
   };
   if (entry.split && entry.split.enabled) {
@@ -2483,6 +2534,10 @@ function saveExpenseEdit() {
         });
       }
     }
+  }
+  removeExpenseFromArchive(oldKey, entry);
+  if (expenseArchiveKey(oldKey, entry) !== expenseArchiveKey(newDateKey, updated)) {
+    markExpenseDeleted(oldKey, entry);
   }
   state.expenses[oldKey].splice(oldIdx, 1);
   if (!state.expenses[oldKey].length) delete state.expenses[oldKey];
@@ -2648,7 +2703,7 @@ function renderMoney(preserveScroll) {
 
   var expenseListBlock = rows.length ?
     '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">' +
-      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Entries · newest first</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Entries · newest first · double-click to edit</div>' +
       rows.slice(0, 100).map(function(row) { return renderExpenseRow(row); }).join('') +
       (rows.length > 100 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">Showing latest 100 of ' + rows.length + ' entries</div>' : '') +
     '</div>'
@@ -2852,13 +2907,16 @@ function loadRemote() {
         if (!remote.friends)   remote.friends   = [];
         if (!remote.customCategories) remote.customCategories = [];
         if (!remote.expenseArchive) remote.expenseArchive = [];
-        if (!remote.moneyView) remote.moneyView = { range: 'month', search: '', searchOpen: false, friendsOpen: false };
-        if (remote.hiddenBudgetTags === undefined) remote.hiddenBudgetTags = local.hiddenBudgetTags || [];
+        if (!remote.deletedExpenseKeys) remote.deletedExpenseKeys = [];
+        remote.deletedExpenseKeys = mergeDeletedExpenseKeys(local.deletedExpenseKeys, remote.deletedExpenseKeys);
+        state.deletedExpenseKeys = remote.deletedExpenseKeys;
         remote.expenses = mergeExpenseLogs(local.expenses, remote.expenses);
         remote.friends = mergeFriends(local.friends, remote.friends);
         remote.expenseArchive = mergeExpenseArchive(local.expenseArchive, remote.expenseArchive);
         remote.customCategories = mergeCustomCategories(local.customCategories, remote.customCategories);
-        remote.moneyView = local.moneyView || remote.moneyView || { range: 'month', search: '' };
+        if (!remote.moneyView) remote.moneyView = { range: 'month', search: '', searchOpen: false, friendsOpen: false };
+        if (remote.hiddenBudgetTags === undefined) remote.hiddenBudgetTags = local.hiddenBudgetTags || [];
+        remote.moneyView = local.moneyView || remote.moneyView || { range: 'month', search: '', searchOpen: false, friendsOpen: false };
         remote.appearance = local.appearance || remote.appearance || { mode: 'dark', accent: 'gold' };
         remote.profileName = remote.profileName || local.profileName || '';
         remote.productiveThreshold = remote.productiveThreshold || local.productiveThreshold || 6;

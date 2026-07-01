@@ -316,8 +316,8 @@
           <span id="nightDurDisplay" style="font-family:var(--mono);font-size:11px;color:var(--gold);"></span>
         </div>
         <div class="time-input-row">
-          <input type="time" id="nightStart" placeholder="Slept at" onchange="calcSleep()">
-          <input type="time" id="nightEnd" placeholder="Woke at" onchange="calcSleep()">
+          <input type="time" id="nightStart" placeholder="Slept at" onchange="calcSleep()" oninput="calcSleep()">
+          <input type="time" id="nightEnd" placeholder="Woke at" onchange="calcSleep()" oninput="calcSleep()">
         </div>
       </div>
       <div>
@@ -814,41 +814,69 @@ function calcSleep() {
   if (napEl && napDur  !== null) napEl.textContent = formatHours(napDur);
   var k = todayKey();
   if (!state.sleep[k]) state.sleep[k] = {};
-  if (ns && ne) { state.sleep[k].nightStart = ns; state.sleep[k].nightEnd = ne; state.sleep[k].nightDur = nightDur; }
+  if (ns && ne) {
+    state.sleep[k].nightStart = ns;
+    state.sleep[k].nightEnd = ne;
+    state.sleep[k].nightDur = nightDur;
+  }
   if (nps && npe) { state.sleep[k].napStart = nps; state.sleep[k].napEnd = npe; state.sleep[k].napDur = napDur; }
-  saveState(state);
   applySleepCheckFromLog();
   renderSleepDisplay();
 }
 
-function applySleepCheckFromLog() {
+function getNightSleepForCheck() {
+  var k = todayKey();
+  var sl = (state.sleep && state.sleep[k]) || {};
+  var nsEl = document.getElementById('nightStart');
+  var neEl = document.getElementById('nightEnd');
+  var ns = (nsEl && nsEl.value) ? nsEl.value : (sl.nightStart || '');
+  var ne = (neEl && neEl.value) ? neEl.value : (sl.nightEnd || '');
+  var nightDur = calcDuration(ns, ne);
+  if (nightDur === null && typeof sl.nightDur === 'number') nightDur = sl.nightDur;
+  return { ns: ns, ne: ne, nightDur: nightDur };
+}
+
+function isSoundSleepDuration(hours) {
+  if (hours === null || isNaN(hours)) return false;
+  var mins = Math.round(hours * 60);
+  return mins >= 360 && mins <= 450;
+}
+
+function syncSleepCheckFromLog() {
   var k = todayKey();
   if (!state.days[k]) state.days[k] = { checks: {}, diary: {} };
-  var ns = document.getElementById('nightStart') ? document.getElementById('nightStart').value : '';
-  var ne = document.getElementById('nightEnd') ? document.getElementById('nightEnd').value : '';
-  var nightDur = calcDuration(ns, ne);
+  var sleep = getNightSleepForCheck();
+  var ns = sleep.ns;
+  var ne = sleep.ne;
+  var nightDur = sleep.nightDur;
   var noteEl = document.getElementById('sleepLogicNote');
   var msg = '';
+  var shouldCheck = false;
   if (!ns || !ne || nightDur === null) {
-    state.days[k].checks['sleep'] = false;
-    msg = 'Enter night sleep start and wake times. Sound Sleep checks only when night sleep is 6–7.5 hours.';
-  } else if (nightDur >= 6 && nightDur <= 7.5) {
-    state.days[k].checks['sleep'] = true;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is within 6–7.5h — Sound Sleep checked.';
+    shouldCheck = false;
+    msg = 'Enter night sleep start and wake times. Sound Sleep checks only when night sleep is 6-7.5 hours.';
+  } else if (isSoundSleepDuration(nightDur)) {
+    shouldCheck = true;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is within 6-7.5h - Sound Sleep checked.';
   } else if (nightDur < 6) {
-    state.days[k].checks['sleep'] = false;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is under 6h — Sound Sleep unchecked.';
+    shouldCheck = false;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is under 6h - Sound Sleep unchecked.';
   } else {
-    state.days[k].checks['sleep'] = false;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is over 7.5h — Sound Sleep unchecked.';
+    shouldCheck = false;
+    msg = 'Night sleep ' + formatHours(nightDur) + ' is over 7.5h - Sound Sleep unchecked.';
   }
+  state.days[k].checks['sleep'] = shouldCheck;
   if (noteEl) {
     noteEl.textContent = msg;
-    noteEl.style.borderColor = state.days[k].checks['sleep'] ? 'var(--gold-mid)' : 'var(--border)';
-    noteEl.style.color = state.days[k].checks['sleep'] ? 'var(--gold)' : 'var(--muted)';
+    noteEl.style.borderColor = shouldCheck ? 'var(--gold-mid)' : 'var(--border)';
+    noteEl.style.color = shouldCheck ? 'var(--gold)' : 'var(--muted)';
   }
   saveState(state);
-  renderChecklist();
+}
+
+function applySleepCheckFromLog() {
+  syncSleepCheckFromLog();
+  renderChecklist(true);
   renderHero();
   renderMiniGoals();
 }
@@ -885,7 +913,10 @@ function renderSleepDisplay() {
 function loadSleepForm() {
   var k = todayKey();
   var sl = state.sleep[k];
-  if (!sl) return;
+  if (!sl) {
+    syncSleepCheckFromLog();
+    return;
+  }
   var fields = ['nightStart','nightEnd','napStart','napEnd'];
   var keys   = ['nightStart','nightEnd','napStart','napEnd'];
   fields.forEach(function(id, i) {
@@ -1405,7 +1436,8 @@ function deleteTodo(ev, i) {
 }
 
 // ── CHECKLIST ──
-function renderChecklist() {
+function renderChecklist(skipSleepSync) {
+  if (!skipSleepSync) syncSleepCheckFromLog();
   var entry=getTodayEntry();
   document.getElementById('checklist').innerHTML = CHECKS.map(function(c){
     var done=!!(entry.checks&&entry.checks[c.id]);

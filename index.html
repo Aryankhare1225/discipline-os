@@ -212,7 +212,7 @@
   .sleep-card-val{font-family:var(--mono);font-size:20px;color:var(--gold);font-weight:700;}
   .sleep-card-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
 </style>
-<script src="i18n.js"></script>
+<script src="i18n.js" onerror="window.__i18nLoadFailed=true"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -426,7 +426,7 @@
 <div class="secret-overlay hidden" id="nameOverlay">
   <div class="pin-title" data-i18n="overlay.welcomeTitle">Welcome — set up your tracker</div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:280px;line-height:1.5;" data-i18n="overlay.welcomeSub">Your productivity count starts today on first sign-in.</div>
-  <input id="nameInput" type="text" class="diary-input" data-i18n-placeholder="overlay.namePlaceholder" placeholder="Full name e.g. Aryan Khare" style="width:280px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
+  <input id="nameInput" type="text" class="diary-input" data-i18n-placeholder="overlay.namePlaceholder" placeholder="Full name e.g. Aryan Khare" style="width:280px;margin-bottom:10px;" onkeydown="if(event.key==='Enter')saveDisplayName()">
   <div id="onboardGoalWrap" style="width:280px;margin-bottom:10px;">
     <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="overlay.yearlyGoal">Yearly productive days target</label>
     <input id="yearlyGoalInput" type="number" min="1" max="365" value="300" class="diary-input" style="width:100%;margin-bottom:6px;">
@@ -482,6 +482,37 @@ var CHECKS=[
   {id:'food',     name:'Healthy Food',                   desc:'No junk, no ultra-processed',      emoji:'🥗'},
   {id:'startup',  name:'Startup Work',                   desc:'Build, research, or validate',     emoji:'🚀'},
 ];
+
+function ensureI18n() {
+  if (typeof I18N !== 'undefined' && typeof t === 'function') return;
+  console.error('Discipline OS: translation data missing — using English defaults');
+  window.currentLang = 'en';
+  window.t = function(key, vars) {
+    var str = key;
+    if (vars) {
+      var keys = Object.keys(vars);
+      for (var i = 0; i < keys.length; i++) {
+        str = str.split('{' + keys[i] + '}').join(String(vars[keys[i]]));
+      }
+    }
+    return str;
+  };
+  window.getCheckTexts = function(id) {
+    for (var i = 0; i < CHECKS.length; i++) {
+      if (CHECKS[i].id === id) return { name: CHECKS[i].name, desc: CHECKS[i].desc };
+    }
+    return { name: id, desc: '' };
+  };
+  window.getCategoryLabel = function(id) {
+    for (var j = 0; j < BASE_EXPENSE_CATEGORIES.length; j++) {
+      if (BASE_EXPENSE_CATEGORIES[j].id === id) return BASE_EXPENSE_CATEGORIES[j].label;
+    }
+    return id;
+  };
+  window.getQuote = function(index) {
+    return QUOTES[((index % QUOTES.length) + QUOTES.length) % QUOTES.length];
+  };
+}
 
 var QUOTES=[
   {text:"We suffer more in imagination than in reality.",author:"— Seneca"},
@@ -722,7 +753,10 @@ function applyStaticLocale() {
   var tabEls = document.querySelectorAll('.tabs .tab');
   for (var i = 0; i < tabEls.length && i < tabIds.length; i++) {
     if (tabIds[i] === 'private') tabEls[i].innerHTML = '&#128274;';
-    else tabEls[i].textContent = t('tab.' + tabIds[i]);
+    else {
+      var tabKey = tabIds[i] === 'tapan' ? 'work' : tabIds[i];
+      tabEls[i].textContent = t('tab.' + tabKey);
+    }
   }
   var logoSub = document.getElementById('logoSub');
   if (logoSub) logoSub.textContent = t('home.logoSub') + ' \u00b7 2026';
@@ -1312,10 +1346,13 @@ function latestBF() {
 
 // ── QUOTE ──
 function renderQuote() {
+  var qEl = document.getElementById('quoteText');
+  var aEl = document.getElementById('quoteAuthor');
+  if (!qEl || !aEl) return;
   var day = Math.floor(Date.now()/86400000);
   var q = getQuote(day);
-  document.getElementById('quoteText').textContent   = q.text;
-  document.getElementById('quoteAuthor').textContent = q.author;
+  qEl.textContent = q.text;
+  aEl.textContent = q.author;
 }
 
 // ── HERO ──
@@ -3274,9 +3311,21 @@ auth.onAuthStateChanged(function(user) {
 });
 
 rolloverTodos();
+ensureI18n();
 applyAppearance();
 syncLangFromState();
-applyLocale();
+try {
+  applyLocale();
+} catch (e) {
+  console.error('applyLocale failed:', e);
+  updateProductiveLabels();
+  renderHero();
+  renderQuote();
+  renderMiniGoals();
+  renderFrontTodo();
+  renderFrontMoney();
+  goHome();
+}
 renderLangPopover();
 requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';

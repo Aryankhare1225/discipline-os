@@ -46,6 +46,7 @@
   .theme-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;flex-shrink:0;}
   .theme-btn:hover,.theme-btn.open{border-color:var(--gold-mid);background:var(--gold-dim);}
   .theme-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  #langBtnIcon{font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;}
   .theme-popover{position:fixed;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 10px 40px rgba(0,0,0,0.35);min-width:230px;display:none;}
   .theme-popover.open{display:block;}
   .theme-popover-title{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px;}
@@ -211,6 +212,7 @@
   .sleep-card-val{font-family:var(--mono);font-size:20px;color:var(--gold);font-weight:700;}
   .sleep-card-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
 </style>
+<script src="i18n.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -222,15 +224,18 @@
     <div class="topbar">
       <div class="topbar-left">
         <div class="logo-name" id="logoName" onclick="goHome()" title="Go to Home">Aryan Khare</div>
-        <div class="logo-sub">Discipline OS &middot; 2026</div>
+        <div class="logo-sub" id="logoSub">Discipline OS &middot; 2026</div>
       </div>
       <div class="topbar-right">
         <div class="date-badge" id="topDate"></div>
         <div class="topbar-actions">
+          <button class="theme-btn" id="langBtn" onclick="toggleLangPopover(event)" title="Language" aria-label="Language">
+            <span id="langBtnIcon">En</span>
+          </button>
           <button class="theme-btn" id="themeBtn" onclick="toggleThemePopover(event)" title="Appearance" aria-label="Appearance">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           </button>
-          <button id="loginBtn" onclick="signIn()" style="display:none;font-family:monospace;font-size:10px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;">Sign in</button>
+          <button id="loginBtn" onclick="signIn()" style="display:none;font-family:monospace;font-size:10px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;" data-i18n="auth.signIn">Sign in</button>
           <div id="userBadge" style="display:none;font-family:monospace;font-size:10px;color:var(--muted);cursor:pointer;" onclick="openSettings()" title="Settings">Sign out</div>
         </div>
       </div>
@@ -251,6 +256,7 @@
   </div>
 </div>
 
+<div id="langPopover" class="theme-popover"></div>
 <div id="themePopover" class="theme-popover"></div>
 
 <div id="homeScreen">
@@ -264,16 +270,16 @@
       </svg>
       <div class="ring-center">
         <span class="ring-count" id="ringCount">0</span>
-        <span class="ring-label">productive</span>
+        <span class="ring-label" id="ringLabelText">productive</span>
         <span class="ring-goal" id="ringGoalLabel">/ 300</span>
       </div>
     </div>
     <div class="ring-stats-row">
-      <div class="ring-stat-item"><div class="ring-stat-val" id="pctStat">0%</div><div class="ring-stat-lbl">Done</div></div>
+      <div class="ring-stat-item"><div class="ring-stat-val" id="pctStat">0%</div><div class="ring-stat-lbl" id="statDoneLbl">Done</div></div>
       <div class="ring-stat-divider"></div>
-      <div class="ring-stat-item"><div class="ring-stat-val" id="remStat">300</div><div class="ring-stat-lbl">Left</div></div>
+      <div class="ring-stat-item"><div class="ring-stat-val" id="remStat">300</div><div class="ring-stat-lbl" id="statLeftLbl">Left</div></div>
       <div class="ring-stat-divider"></div>
-      <div class="ring-stat-item"><div class="ring-stat-val" id="dayStat">1</div><div class="ring-stat-lbl">Day #</div></div>
+      <div class="ring-stat-item"><div class="ring-stat-val" id="dayStat">1</div><div class="ring-stat-lbl" id="statDayLbl">Day #</div></div>
     </div>
   </div>
 
@@ -284,7 +290,7 @@
   <div class="hero-streak-wrap">
     <span class="streak-fire">&#128293;</span>
     <span class="streak-num" id="streakNum">0</span>
-    <span class="streak-label">Day Streak</span>
+    <span class="streak-label" id="streakLabelText">Day Streak</span>
     <div class="streak-sub" id="streakSub"></div>
   </div>
 </div>
@@ -306,40 +312,40 @@
   <!-- SLEEP LOGGING -->
   <div class="divider"></div>
   <div id="sleepSection">
-  <div class="section-title">Sleep Log</div>
+  <div class="section-title" id="sleepSectionTitle" data-i18n="sleep.title">Sleep Log</div>
   <div id="sleepDisplay"></div>
   <div id="sleepLogForm">
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
       <div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Night Sleep</label>
+          <label id="nightSleepLabel" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;" data-i18n="sleep.nightSleep">Night Sleep</label>
           <span id="nightDurDisplay" style="font-family:var(--mono);font-size:11px;color:var(--gold);"></span>
         </div>
         <div class="time-input-row">
-          <input type="time" id="nightStart" placeholder="Slept at" onchange="calcSleep()" oninput="calcSleep()">
-          <input type="time" id="nightEnd" placeholder="Woke at" onchange="calcSleep()" oninput="calcSleep()">
+          <input type="time" id="nightStart" data-i18n-placeholder="sleep.sleptAt" placeholder="Slept at" onchange="calcSleep()" oninput="calcSleep()">
+          <input type="time" id="nightEnd" data-i18n-placeholder="sleep.wokeAt" placeholder="Woke at" onchange="calcSleep()" oninput="calcSleep()">
         </div>
       </div>
       <div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Nap (optional)</label>
+          <label id="napSleepLabel" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;" data-i18n="sleep.napOptional">Nap (optional)</label>
           <span id="napDurDisplay" style="font-family:var(--mono);font-size:11px;color:var(--gold);"></span>
         </div>
         <div class="time-input-row">
-          <input type="time" id="napStart" placeholder="Nap start" onchange="calcSleep()">
-          <input type="time" id="napEnd" placeholder="Nap end" onchange="calcSleep()">
+          <input type="time" id="napStart" data-i18n-placeholder="sleep.napStart" placeholder="Nap start" onchange="calcSleep()">
+          <input type="time" id="napEnd" data-i18n-placeholder="sleep.napEnd" placeholder="Nap end" onchange="calcSleep()">
         </div>
       </div>
     </div>
-    <div id="sleepLogicNote" style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;">Log night sleep (6–7.5 hrs) to auto-check Sound Sleep.</div>
+    <div id="sleepLogicNote" style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;" data-i18n="sleep.logicDefault">Log night sleep (6–7.5 hrs) to auto-check Sound Sleep.</div>
   </div>
   </div>
   <div class="divider"></div>
   <div id="todoSection">
-  <div class="section-title">To-Do List</div>
+  <div class="section-title" id="todoSectionTitle" data-i18n="todo.title">To-Do List</div>
   <div id="todoInputArea">
-    <input id="todoInput" type="text" class="diary-input" placeholder="Add a task..." style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')addTodo()">
-    <button onclick="addTodo()" class="btn-save" style="padding:10px;">+ Add Task</button>
+    <input id="todoInput" type="text" class="diary-input" data-i18n-placeholder="todo.placeholder" placeholder="Add a task..." style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')addTodo()">
+    <button onclick="addTodo()" class="btn-save" id="todoAddBtn" style="padding:10px;" data-i18n="todo.addButton">+ Add Task</button>
   </div>
   <div id="todayTodoList" style="margin-top:10px;"></div>
   </div>
@@ -347,33 +353,33 @@
 
 <div class="panel" id="panel-calendar">
   <div class="cal-legend">
-    <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Productive</div>
-    <div class="legend-item"><div class="legend-dot" style="background:rgba(201,168,76,0.22);border:1px solid var(--gold)"></div>Partial</div>
-    <div class="legend-item"><div class="legend-dot" style="background:var(--card);border:1px solid var(--border)"></div>Missed</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><span data-i18n="calendar.productive">Productive</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(201,168,76,0.22);border:1px solid var(--gold)"></div><span data-i18n="calendar.partial">Partial</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--card);border:1px solid var(--border)"></div><span data-i18n="calendar.missed">Missed</span></div>
   </div>
   <div class="cal-nav">
-    <button class="cal-nav-btn" onclick="changeMonth(-1)">&larr; Prev</button>
+    <button class="cal-nav-btn" id="calNavPrev" onclick="changeMonth(-1)">&larr; Prev</button>
     <span class="cal-month-title" id="calMonthTitle"></span>
-    <button class="cal-nav-btn" onclick="changeMonth(1)">Next &rarr;</button>
+    <button class="cal-nav-btn" id="calNavNext" onclick="changeMonth(1)">Next &rarr;</button>
   </div>
-  <div class="days-header"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div class="days-header"><span data-i18n="day.sun">Sun</span><span data-i18n="day.mon">Mon</span><span data-i18n="day.tue">Tue</span><span data-i18n="day.wed">Wed</span><span data-i18n="day.thu">Thu</span><span data-i18n="day.fri">Fri</span><span data-i18n="day.sat">Sat</span></div>
   <div class="week-grid" id="calendarContent"></div>
   <div class="cal-prod-count" id="calProdCount"></div>
   <div id="calMonthStats"></div>
 </div>
 
 <div class="panel" id="panel-goals">
-  <div class="section-title">2026 Mission</div>
+  <div class="section-title" id="goalsSectionTitle" data-i18n="goals.mission2026">2026 Mission</div>
   <div class="goals-list" id="goalsList"></div>
 </div>
 
 <div class="panel" id="panel-body">
-  <div class="section-title">Body Tracking</div>
+  <div class="section-title" id="bodySectionTitle" data-i18n="body.title">Body Tracking</div>
   <div id="bodyContent"></div>
 </div>
 
 <div class="panel" id="panel-tapan">
-  <div class="section-title">Work Log</div>
+  <div class="section-title" id="tapanSectionTitle" data-i18n="work.title">Work Log</div>
   <div id="tapanContent"></div>
 </div>
 
@@ -382,18 +388,18 @@
 </div>
 
 <div class="panel" id="panel-private">
-  <div class="section-title">Private Log</div>
+  <div class="section-title" id="privateSectionTitle" data-i18n="private.title">Private Log</div>
   <div id="privateContent"></div>
 </div>
 
 <div class="panel" id="panel-history">
-  <div class="section-title">Last 30 Days</div>
+  <div class="section-title" id="historySectionTitle" data-i18n="history.title">Last 30 Days</div>
   <div id="historyContent"></div>
 </div>
 
 <!-- PIN OVERLAY -->
 <div class="secret-overlay hidden" id="pinOverlay">
-  <div class="pin-title">Private Log</div>
+  <div class="pin-title" id="pinOverlayTitle" data-i18n="overlay.pinTitle">Private Log</div>
   <div class="pin-dots" id="pinDots">
     <div class="pin-dot" id="pd0"></div>
     <div class="pin-dot" id="pd1"></div>
@@ -412,41 +418,41 @@
     <button class="pin-btn" onclick="pinPress('8')">8</button>
     <button class="pin-btn" onclick="pinPress('9')">9</button>
     <button class="pin-btn" onclick="pinPress('back')" style="font-size:14px;">&#9003;</button>
-    <button class="pin-btn" onclick="pinPress('cancel')" style="font-size:11px;">Cancel</button>
+    <button class="pin-btn" onclick="pinPress('cancel')" id="pinCancelBtn" style="font-size:11px;" data-i18n="common.cancel">Cancel</button>
   </div>
 </div>
 
 <!-- NAME OVERLAY (first sign-in) -->
 <div class="secret-overlay hidden" id="nameOverlay">
-  <div class="pin-title">Welcome — set up your tracker</div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:280px;line-height:1.5;">Your productivity count starts today on first sign-in.</div>
-  <input id="nameInput" type="text" class="diary-input" placeholder="Full name e.g. Aryan Khare" style="width:280px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
+  <div class="pin-title" data-i18n="overlay.welcomeTitle">Welcome — set up your tracker</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:12px;text-align:center;max-width:280px;line-height:1.5;" data-i18n="overlay.welcomeSub">Your productivity count starts today on first sign-in.</div>
+  <input id="nameInput" type="text" class="diary-input" data-i18n-placeholder="overlay.namePlaceholder" placeholder="Full name e.g. Aryan Khare" style="width:280px;margin-bottom:10px;" onkeydown="if(event.key===\'Enter\')saveDisplayName()">
   <div id="onboardGoalWrap" style="width:280px;margin-bottom:10px;">
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Yearly productive days target</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="overlay.yearlyGoal">Yearly productive days target</label>
     <input id="yearlyGoalInput" type="number" min="1" max="365" value="300" class="diary-input" style="width:100%;margin-bottom:6px;">
-    <div style="font-size:10px;color:var(--muted);line-height:1.45;">Set once — cannot change after saving.</div>
+    <div style="font-size:10px;color:var(--muted);line-height:1.45;" data-i18n="settings.yearlyOnce">Set once — cannot change after saving.</div>
   </div>
-  <button onclick="saveDisplayName()" class="btn-save" style="width:280px;padding:12px;">Continue</button>
+  <button onclick="saveDisplayName()" class="btn-save" style="width:280px;padding:12px;" data-i18n="common.continue">Continue</button>
 </div>
 
 <!-- SETTINGS OVERLAY -->
 <div class="secret-overlay hidden" id="settingsOverlay">
-  <div class="pin-title">Settings</div>
+  <div class="pin-title" data-i18n="settings.title">Settings</div>
   <div style="width:300px;max-height:70vh;overflow-y:auto;padding:0 4px;">
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Display name</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="settings.displayName">Display name</label>
     <input id="settingsNameInput" type="text" class="diary-input" style="width:100%;margin-bottom:12px;">
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Checks needed for productive day</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="settings.checksThreshold">Checks needed for productive day</label>
     <input id="settingsThresholdInput" type="number" min="1" max="8" class="diary-input" style="width:100%;margin-bottom:12px;">
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Yearly productive days target</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="settings.yearlyGoal">Yearly productive days target</label>
     <input id="settingsYearlyGoalInput" type="number" min="1" max="365" class="diary-input" style="width:100%;margin-bottom:4px;">
     <div id="settingsYearlyGoalNote" style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.4;"></div>
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Work goal — title</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="settings.workGoalTitle">Work goal — title</label>
     <input id="settingsWorkTitleInput" type="text" class="diary-input" style="width:100%;margin-bottom:10px;">
-    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;">Work goal — description</label>
+    <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px;" data-i18n="settings.workGoalDesc">Work goal — description</label>
     <textarea id="settingsWorkTextInput" rows="3" class="diary-input" style="width:100%;margin-bottom:14px;resize:none;"></textarea>
-    <button onclick="saveSettings()" class="btn-save" style="width:100%;padding:12px;margin-bottom:8px;">Save Settings</button>
-    <button onclick="signOut()" class="btn-secondary" style="width:100%;margin-top:0;">Sign Out</button>
-    <button onclick="closeSettings()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:11px;cursor:pointer;">Close</button>
+    <button onclick="saveSettings()" class="btn-save" style="width:100%;padding:12px;margin-bottom:8px;" data-i18n="settings.save">Save Settings</button>
+    <button onclick="signOut()" class="btn-secondary" style="width:100%;margin-top:0;" data-i18n="settings.signOut">Sign Out</button>
+    <button onclick="closeSettings()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:11px;cursor:pointer;" data-i18n="settings.close">Close</button>
   </div>
 </div>
 
@@ -551,8 +557,8 @@ function saveState(s) {
   if (currentUser) {
     db.collection('users').doc(currentUser.uid)
       .set({ data: s, updatedAt: new Date().toISOString() })
-      .then(function(){ showSync('Synced'); })
-      .catch(function(){ showSync('Sync failed'); });
+      .then(function(){ showSync(t('auth.synced')); })
+      .catch(function(){ showSync(t('auth.syncFailed')); });
   }
 }
 
@@ -580,7 +586,8 @@ if (!state.expenseArchive) state.expenseArchive = [];
 if (!state.deletedExpenseKeys) state.deletedExpenseKeys = [];
 if (!state.moneyView) state.moneyView = { range: 'month', search: '', searchOpen: false, friendsOpen: false };
 if (!state.hiddenBudgetTags) state.hiddenBudgetTags = [];
-if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
+if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold', lang: 'en' };
+if (!state.appearance.lang) state.appearance.lang = 'en';
 if (state.profileName === undefined) state.profileName = '';
 if (state.productiveThreshold === undefined) state.productiveThreshold = 6;
 if (state.yearlyProductiveGoal === undefined) state.yearlyProductiveGoal = 300;
@@ -611,8 +618,20 @@ function getStartDate() {
   }
   return new Date('2026-06-23');
 }
-function getWorkGoalTitle() { return state.workGoalTitle || DEFAULT_WORK_GOAL_TITLE; }
-function getWorkGoalText() { return state.workGoalText || DEFAULT_WORK_GOAL_TEXT; }
+function getWorkGoalTitle() {
+  var v = state.workGoalTitle;
+  if (!v || v === DEFAULT_WORK_GOAL_TITLE) return t('work.defaultTitle');
+  return v;
+}
+function getWorkGoalText() {
+  var v = state.workGoalText;
+  if (!v || v === DEFAULT_WORK_GOAL_TEXT) return t('work.defaultText');
+  return v;
+}
+function getLocaleCode() {
+  var lang = getLang();
+  return lang === 'en' ? 'en-IN' : 'hi-IN';
+}
 function getDoneCheckCount(e) {
   if (!e || !e.checks) return 0;
   return Object.keys(e.checks).map(function(_k) { return e.checks[_k]; }).filter(Boolean).length;
@@ -625,9 +644,13 @@ function isPartial(e) {
 function updateProductiveLabels() {
   var th = getProductiveThreshold();
   var title = document.getElementById('checksSectionTitle');
-  if (title) title.textContent = 'Daily Checks — need \u2265' + th + ' for productive day';
+  if (title) title.textContent = t('home.checksTitle', { n: th });
   var ringGoal = document.getElementById('ringGoalLabel');
   if (ringGoal) ringGoal.textContent = '/ ' + getYearlyGoal();
+  var calPrev = document.getElementById('calNavPrev');
+  var calNext = document.getElementById('calNavNext');
+  if (calPrev) calPrev.innerHTML = '&larr; ' + t('calendar.prev');
+  if (calNext) calNext.innerHTML = t('calendar.next') + ' &rarr;';
 }
 function countProd()     { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(isProductive).length; }
 function countNoSugar()  { return Object.keys(state.days).map(function(_k){return state.days[_k];}).filter(function(e){ return e.checks && e.checks.nosugar; }).length; }
@@ -666,14 +689,142 @@ function getCurrentMonthHabitStats() {
   return getMonthHabitStats(n.getFullYear(), n.getMonth());
 }
 
+function getLang() {
+  return (state.appearance && state.appearance.lang) ? state.appearance.lang : 'en';
+}
+
+function syncLangFromState() {
+  window.currentLang = getLang();
+  document.documentElement.lang = getLang() === 'en' ? 'en' : 'hi';
+}
+
+function setLang(lang) {
+  if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold', lang: 'en' };
+  state.appearance.lang = lang;
+  syncLangFromState();
+  saveState(state);
+  applyLocale();
+  closeLangPopover();
+  showToast(t('lang.changed'));
+}
+
+function updateLangBtnIcon() {
+  var el = document.getElementById('langBtnIcon');
+  if (!el) return;
+  var lang = getLang();
+  if (lang === 'deva') el.textContent = '\u0905';
+  else if (lang === 'hi') el.textContent = 'Hi';
+  else el.textContent = 'En';
+}
+
+function applyStaticLocale() {
+  var tabIds = ['today', 'calendar', 'money', 'tapan', 'goals', 'body', 'private', 'history'];
+  var tabEls = document.querySelectorAll('.tabs .tab');
+  for (var i = 0; i < tabEls.length && i < tabIds.length; i++) {
+    if (tabIds[i] === 'private') tabEls[i].innerHTML = '&#128274;';
+    else tabEls[i].textContent = t('tab.' + tabIds[i]);
+  }
+  var logoSub = document.getElementById('logoSub');
+  if (logoSub) logoSub.textContent = t('home.logoSub') + ' \u00b7 2026';
+  var rl = document.getElementById('ringLabelText');
+  if (rl) rl.textContent = t('home.productive');
+  var sd = document.getElementById('statDoneLbl');
+  if (sd) sd.textContent = t('home.done');
+  var sl = document.getElementById('statLeftLbl');
+  if (sl) sl.textContent = t('home.left');
+  var sday = document.getElementById('statDayLbl');
+  if (sday) sday.textContent = t('home.dayNum');
+  var stl = document.getElementById('streakLabelText');
+  if (stl) stl.textContent = t('home.dayStreak');
+  var loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.textContent = t('auth.signIn');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+}
+
+function applyLocale() {
+  syncLangFromState();
+  applyStaticLocale();
+  updateLangBtnIcon();
+  renderUserDisplay();
+  renderThemePopover();
+  renderLangPopover();
+  updateProductiveLabels();
+  renderQuote();
+  renderHero();
+  renderMiniGoals();
+  renderFrontTodo();
+  renderFrontMoney();
+  if (currentSection === 'home') goHome();
+  else switchTab(currentSection);
+}
+
+var langPopoverOpen = false;
+
+function renderLangPopover() {
+  var el = document.getElementById('langPopover');
+  if (!el) return;
+  var lang = getLang();
+  var chip = function(code, label) {
+    return '<button class="theme-chip' + (lang === code ? ' active' : '') + '" onclick="setLang(\'' + code + '\')">' + label + '</button>';
+  };
+  el.innerHTML =
+    '<div class="theme-popover-title">' + t('theme.language') + '</div>' +
+    '<div class="theme-row">' +
+      chip('en', t('theme.english')) +
+      chip('deva', t('theme.devanagari')) +
+      chip('hi', t('theme.hindiRoman')) +
+    '</div>';
+}
+
+function positionLangPopover() {
+  var btn = document.getElementById('langBtn');
+  var pop = document.getElementById('langPopover');
+  if (!btn || !pop) return;
+  var r = btn.getBoundingClientRect();
+  pop.style.top = (r.bottom + 8) + 'px';
+  pop.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+  pop.style.left = 'auto';
+}
+
+function toggleLangPopover(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  closeThemePopover();
+  langPopoverOpen = !langPopoverOpen;
+  var pop = document.getElementById('langPopover');
+  var btn = document.getElementById('langBtn');
+  if (!pop) return;
+  if (langPopoverOpen) {
+    renderLangPopover();
+    pop.classList.add('open');
+    if (btn) btn.classList.add('open');
+    positionLangPopover();
+  } else {
+    closeLangPopover();
+  }
+}
+
+function closeLangPopover() {
+  langPopoverOpen = false;
+  var pop = document.getElementById('langPopover');
+  var btn = document.getElementById('langBtn');
+  if (pop) pop.classList.remove('open');
+  if (btn) btn.classList.remove('open');
+}
+
 function applyAppearance() {
-  var app = state.appearance || { mode: 'dark', accent: 'gold' };
+  var app = state.appearance || { mode: 'dark', accent: 'gold', lang: 'en' };
   document.body.setAttribute('data-mode', app.mode === 'light' ? 'light' : 'dark');
   document.body.setAttribute('data-accent', app.accent || 'gold');
+  syncLangFromState();
 }
 
 function setAppearanceMode(mode) {
-  if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
+  if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold', lang: 'en' };
   state.appearance.mode = mode;
   saveState(state);
   applyAppearance();
@@ -681,7 +832,7 @@ function setAppearanceMode(mode) {
 }
 
 function setAppearanceAccent(accent) {
-  if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold' };
+  if (!state.appearance) state.appearance = { mode: 'dark', accent: 'gold', lang: 'en' };
   state.appearance.accent = accent;
   saveState(state);
   applyAppearance();
@@ -701,15 +852,15 @@ function renderThemePopover() {
     return '<button class="theme-chip accent-' + a + (app.accent === a ? ' active' : '') + '" onclick="setAppearanceAccent(\'' + a + '\')">' + label + '</button>';
   };
   el.innerHTML =
-    '<div class="theme-popover-title">Appearance</div>' +
-    '<div class="theme-row"><span class="theme-label">Mode</span>' +
-      modeBtn('dark', 'Dark') + modeBtn('light', 'Light') +
+    '<div class="theme-popover-title">' + t('theme.appearance') + '</div>' +
+    '<div class="theme-row"><span class="theme-label">' + t('theme.mode') + '</span>' +
+      modeBtn('dark', t('theme.dark')) + modeBtn('light', t('theme.light')) +
     '</div>' +
-    '<div class="theme-row"><span class="theme-label">Color</span>' +
-      accentBtn('gold', 'Gold') +
-      accentBtn('ocean', 'Ocean') +
-      accentBtn('forest', 'Forest') +
-      accentBtn('rose', 'Rose') +
+    '<div class="theme-row"><span class="theme-label">' + t('theme.color') + '</span>' +
+      accentBtn('gold', t('theme.gold')) +
+      accentBtn('ocean', t('theme.ocean')) +
+      accentBtn('forest', t('theme.forest')) +
+      accentBtn('rose', t('theme.rose')) +
     '</div>';
 }
 
@@ -725,6 +876,7 @@ function positionThemePopover() {
 
 function toggleThemePopover(e) {
   if (e && e.stopPropagation) e.stopPropagation();
+  closeLangPopover();
   themePopoverOpen = !themePopoverOpen;
   var pop = document.getElementById('themePopover');
   var btn = document.getElementById('themeBtn');
@@ -748,10 +900,16 @@ function closeThemePopover() {
 }
 
 document.addEventListener('click', function(e) {
-  if (!themePopoverOpen) return;
-  var pop = document.getElementById('themePopover');
-  var btn = document.getElementById('themeBtn');
-  if (pop && btn && !pop.contains(e.target) && !btn.contains(e.target)) closeThemePopover();
+  if (themePopoverOpen) {
+    var pop = document.getElementById('themePopover');
+    var btn = document.getElementById('themeBtn');
+    if (pop && btn && !pop.contains(e.target) && !btn.contains(e.target)) closeThemePopover();
+  }
+  if (langPopoverOpen) {
+    var lpop = document.getElementById('langPopover');
+    var lbtn = document.getElementById('langBtn');
+    if (lpop && lbtn && !lpop.contains(e.target) && !lbtn.contains(e.target)) closeLangPopover();
+  }
 });
 
 var currentSection = 'home';
@@ -759,6 +917,7 @@ var currentSection = 'home';
 function goHome() {
   currentSection = 'home';
   closeThemePopover();
+  closeLangPopover();
   var home = document.getElementById('homeScreen');
   if (home) home.style.display = 'block';
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
@@ -854,16 +1013,16 @@ function syncSleepCheckFromLog() {
   var shouldCheck = false;
   if (!ns || !ne || nightDur === null) {
     shouldCheck = false;
-    msg = 'Enter night sleep start and wake times. Sound Sleep checks only when night sleep is 6-7.5 hours.';
+    msg = t('sleep.logicEnter');
   } else if (isSoundSleepDuration(nightDur)) {
     shouldCheck = true;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is within 6-7.5h - Sound Sleep checked.';
+    msg = t('sleep.logicOk', { hours: formatHours(nightDur) });
   } else if (nightDur < 6) {
     shouldCheck = false;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is under 6h - Sound Sleep unchecked.';
+    msg = t('sleep.logicUnder', { hours: formatHours(nightDur) });
   } else {
     shouldCheck = false;
-    msg = 'Night sleep ' + formatHours(nightDur) + ' is over 7.5h - Sound Sleep unchecked.';
+    msg = t('sleep.logicOver', { hours: formatHours(nightDur) });
   }
   state.days[k].checks['sleep'] = shouldCheck;
   if (noteEl) {
@@ -901,13 +1060,13 @@ function renderSleepDisplay() {
   el.innerHTML = '<div style="display:flex;gap:8px;padding:8px 0 0;width:100%;">' +
     (sl.nightDur ? '<div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">' +
       '<div style="font-family:var(--mono);font-size:18px;color:var(--gold);font-weight:700;">'+formatHours(sl.nightDur)+'</div>' +
-      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">Night</div></div>' : '') +
+      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">'+t('sleep.night')+'</div></div>' : '') +
     (sl.napDur ? '<div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">' +
       '<div style="font-family:var(--mono);font-size:18px;color:var(--gold);font-weight:700;">'+formatHours(sl.napDur)+'</div>' +
-      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">Nap</div></div>' : '') +
+      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">'+t('sleep.nap')+'</div></div>' : '') +
     '<div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">' +
       '<div style="font-family:var(--mono);font-size:18px;color:var(--gold);font-weight:700;">'+formatHours(total)+'</div>' +
-      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">Total</div></div>' +
+      '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">'+t('sleep.total')+'</div></div>' +
   '</div>';
 }
 function loadSleepForm() {
@@ -968,7 +1127,7 @@ function checkPin() {
     document.getElementById('pinError').textContent = '';
     switchTab('private');
   } else {
-    document.getElementById('pinError').textContent = 'Wrong PIN';
+    document.getElementById('pinError').textContent = t('pin.wrongPin');
     pinBuffer = '';
     updatePinDots();
   }
@@ -982,7 +1141,7 @@ function closePinOverlay() {
 function openPinOverlay() {
   pinBuffer = '';
   updatePinDots();
-  document.getElementById('pinError').textContent = state.pin ? '' : 'First time: set a 4-digit PIN';
+  document.getElementById('pinError').textContent = state.pin ? '' : t('pin.setPinFirst');
   var ov = document.getElementById('pinOverlay');
   if (ov) ov.className = 'secret-overlay';
 }
@@ -994,25 +1153,25 @@ function renderPrivate() {
   var fapPct  = Math.min(priv.fap/3*100, 100);
   var html =
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
-      '<div class="section-title" style="margin-bottom:10px;">Diary Entry &mdash; today only</div>' +
+      '<div class="section-title" style="margin-bottom:10px;">'+t('diary.title')+'</div>' +
       '<div class="diary-grid" style="margin-bottom:14px;">' +
-        '<div class="diary-field"><label class="diary-label">&#128292; Word of the Day</label><input class="diary-input" id="d-word" type="text" placeholder="e.g. Stoic — enduring pain without complaint"></div>' +
-        '<div class="diary-field"><label class="diary-label">&#128161; What I Learned</label><textarea class="diary-input" id="d-learned" rows="2" placeholder="Key insight from today..."></textarea></div>' +
-        '<div class="diary-field"><label class="diary-label">&#10060; What I Missed / Fuckups</label><textarea class="diary-input" id="d-missed" rows="2" placeholder="Be brutally honest..."></textarea></div>' +
-        '<div class="diary-field"><label class="diary-label">&#128197; Plan for Tomorrow</label><textarea class="diary-input" id="d-plan" rows="2" placeholder="Top 3 priorities..."></textarea></div>' +
+        '<div class="diary-field"><label class="diary-label">&#128292; '+t('diary.wordOfDay')+'</label><input class="diary-input" id="d-word" type="text" placeholder="'+t('diary.wordPlaceholder')+'"></div>' +
+        '<div class="diary-field"><label class="diary-label">&#128161; '+t('diary.learned')+'</label><textarea class="diary-input" id="d-learned" rows="2" placeholder="'+t('diary.learnedPlaceholder')+'"></textarea></div>' +
+        '<div class="diary-field"><label class="diary-label">&#10060; '+t('diary.missed')+'</label><textarea class="diary-input" id="d-missed" rows="2" placeholder="'+t('diary.missedPlaceholder')+'"></textarea></div>' +
+        '<div class="diary-field"><label class="diary-label">&#128197; '+t('diary.plan')+'</label><textarea class="diary-input" id="d-plan" rows="2" placeholder="'+t('diary.planPlaceholder')+'"></textarea></div>' +
       '</div>' +
-      '<button class="btn-save" id="saveDiaryBtn" onclick="saveDiary()" style="margin-top:0;">Save Diary</button>' +
+      '<button class="btn-save" id="saveDiaryBtn" onclick="saveDiary()" style="margin-top:0;">'+t('diary.save')+'</button>' +
     '</div>' +
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-        '<span style="font-size:14px;font-weight:600;">Private Log</span>' +
-        '<button onclick="lockPrivate()" style="font-size:10px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;">Lock</button>' +
+        '<span style="font-size:14px;font-weight:600;">'+t('private.title')+'</span>' +
+        '<button onclick="lockPrivate()" style="font-size:10px;background:var(--card);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;">'+t('common.lock')+'</button>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:16px;">' +
         '<div>' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
-            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Alcohol today</label>' +
-            '<span id="alcVal" style="font-family:var(--mono);font-size:13px;color:var(--gold);">'+priv.alcohol+' drinks</span>' +
+            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('private.alcohol')+'</label>' +
+            '<span id="alcVal" style="font-family:var(--mono);font-size:13px;color:var(--gold);">'+priv.alcohol+' '+t('private.drinks')+'</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<button onclick="adjAlcohol(-1)" style="width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;cursor:pointer;">-</button>' +
@@ -1024,7 +1183,7 @@ function renderPrivate() {
         '</div>' +
         '<div>' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
-            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">M count today</label>' +
+            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('private.mCount')+'</label>' +
             '<span id="fapVal" style="font-family:var(--mono);font-size:13px;color:var(--gold);">'+priv.fap+'</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
@@ -1037,12 +1196,12 @@ function renderPrivate() {
         '</div>' +
         '<div>' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
-            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Junk / Sugar consumed</label>' +
-            '<span id="junkCount" style="font-family:var(--mono);font-size:13px;color:var(--gold);">' + (priv.junk ? priv.junk.length : 0) + ' entries</span>' +
+            '<label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('private.junkSugar')+'</label>' +
+            '<span id="junkCount" style="font-family:var(--mono);font-size:13px;color:var(--gold);">' + (priv.junk ? priv.junk.length : 0) + ' '+t('private.entries')+'</span>' +
           '</div>' +
           '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
-            '<input id="junkInput" type="text" placeholder="e.g. 2 biscuits, chai with sugar, mango juice" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
-            '<button onclick="addJunk()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">ADD</button>' +
+            '<input id="junkInput" type="text" placeholder="'+t('private.junkPlaceholder')+'" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
+            '<button onclick="addJunk()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">'+t('common.add').toUpperCase()+'</button>' +
           '</div>' +
           (priv.junk && priv.junk.length ? 
             '<div style="max-height:120px;overflow-y:auto;">' +
@@ -1053,12 +1212,12 @@ function renderPrivate() {
                 '</div>';
               }).join('') +
             '</div>' 
-          : '<div style="font-size:11px;color:var(--muted);">No junk logged today. Keep it up.</div>') +
+          : '<div style="font-size:11px;color:var(--muted);">'+t('private.noJunkToday')+'</div>') +
         '</div>' +
       '</div>' +
     '</div>' +
     '<div class="goal-card" style="margin-bottom:14px;">' +
-      '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">Monthly Overview</div>' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:10px;">'+t('private.monthlyOverview')+'</div>' +
       renderPrivateHistory() +
     '</div>';
   document.getElementById('privateContent').innerHTML = html;
@@ -1072,21 +1231,21 @@ function loadDiaryForm() {
     if (el) el.value = d[k] || '';
   });
   var btn = document.getElementById('saveDiaryBtn');
-  if (btn) btn.textContent = entry.ts ? 'Update Diary' : 'Save Diary';
+  if (btn) btn.textContent = entry.ts ? t('diary.update') : t('diary.save');
 }
 function adjAlcohol(d) { adjPriv('alcohol', d); }
 function adjFap(d)     { adjPriv('fap', d); }
 
 function renderPrivateHistory() {
   var entries = Object.keys(state.private).sort().reverse().slice(0,30);
-  if (!entries.length) return '<div style="font-size:11px;color:var(--muted);">No entries yet.</div>';
+  if (!entries.length) return '<div style="font-size:11px;color:var(--muted);">'+t('private.noEntries')+'</div>';
   var totalAlc = 0, totalFap = 0, days = 0;
   entries.forEach(function(k){ var p=state.private[k]; totalAlc+=p.alcohol||0; totalFap+=p.fap||0; if(p.alcohol||p.fap) days++; });
-  return '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;">Last 30 days &mdash; Alcohol: '+totalAlc+' total &bull; M: '+totalFap+' total</div>' +
+  return '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px;">'+t('private.last30Summary', { alc: totalAlc, fap: totalFap })+'</div>' +
     entries.slice(0,10).map(function(k){
       var p = state.private[k];
       var d = new Date(k+'T00:00:00');
-      var ds= d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+      var ds= d.toLocaleDateString(getLocaleCode(),{weekday:'short',day:'numeric',month:'short'});
       return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);">' +
         '<span style="font-family:var(--mono);color:var(--muted);">'+ds+'</span>' +
         '<span style="color:var(--gold);">' + 
@@ -1118,7 +1277,7 @@ function addJunk() {
   inp.value = '';
   saveState(state);
   renderPrivate();
-  showToast('Junk logged');
+  showToast(t('toast.junkLogged'));
 }
 
 function lockPrivate() {
@@ -1154,7 +1313,7 @@ function latestBF() {
 // ── QUOTE ──
 function renderQuote() {
   var day = Math.floor(Date.now()/86400000);
-  var q = QUOTES[day % QUOTES.length];
+  var q = getQuote(day);
   document.getElementById('quoteText').textContent   = q.text;
   document.getElementById('quoteAuthor').textContent = q.author;
 }
@@ -1167,11 +1326,11 @@ function renderHero() {
   document.getElementById('streakNum').textContent = streak;
   var subEl = document.getElementById('streakSub');
   if (subEl) {
-    if (streak === 0) subEl.textContent = 'Start today';
-    else if (streak < 7) subEl.textContent = 'Keep going';
-    else if (streak < 30) subEl.textContent = 'Building momentum';
-    else if (streak < 100) subEl.textContent = 'Unstoppable';
-    else subEl.textContent = 'ELITE';
+    if (streak === 0) subEl.textContent = t('home.streak.startToday');
+    else if (streak < 7) subEl.textContent = t('home.streak.keepGoing');
+    else if (streak < 30) subEl.textContent = t('home.streak.buildingMomentum');
+    else if (streak < 100) subEl.textContent = t('home.streak.unstoppable');
+    else subEl.textContent = t('home.streak.elite');
   }
   document.getElementById('ringCount').textContent = prod;
   document.getElementById('pctStat').textContent   = Math.round(pct*100)+'%';
@@ -1180,23 +1339,23 @@ function renderHero() {
   updateProductiveLabels();
   setTimeout(function(){ document.getElementById('ringFill').style.strokeDashoffset = circ*(1-pct); },120);
   var n=new Date();
-  document.getElementById('topDate').textContent = n.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('topDate').textContent = n.toLocaleDateString(getLocaleCode(),{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 }
 
 // ── MINI GOALS ──
 function renderMiniGoals() {
   var ms = getCurrentMonthHabitStats();
-  var monthName = new Date().toLocaleString('en', { month: 'short' });
+  var monthName = new Date().toLocaleString(getLang() === 'en' ? 'en' : 'hi', { month: 'short' });
   var goals=[
-    {emoji:'📱', title:'Reels & Visuals', val:ms.noReels+' / '+ms.days+' this month', pct:Math.min(ms.noReels/ms.days*100,100), done:ms.noReels>=ms.days},
-    {emoji:'🍬', title:'No Sugar',   val:ms.noSugar+' / '+ms.days+' this month', pct:Math.min(ms.noSugar/ms.days*100,100), done:ms.noSugar>=ms.days},
-    {emoji:'🍔', title:'No Junk',    val:ms.noJunk+' / '+ms.days+' this month', pct:Math.min(ms.noJunk/ms.days*100,100), done:ms.noJunk>=ms.days},
-    {emoji:'🏃', title:'30 min Run', val:ms.run+' / '+ms.days+' this month', pct:Math.min(ms.run/ms.days*100,100), done:ms.run>=ms.days},
+    {emoji:'📱', title:t('home.miniGoal.reels'), val:t('home.monthVal', { n: ms.noReels, days: ms.days }), pct:Math.min(ms.noReels/ms.days*100,100), done:ms.noReels>=ms.days},
+    {emoji:'🍬', title:t('home.miniGoal.noSugar'), val:t('home.monthVal', { n: ms.noSugar, days: ms.days }), pct:Math.min(ms.noSugar/ms.days*100,100), done:ms.noSugar>=ms.days},
+    {emoji:'🍔', title:t('home.miniGoal.noJunk'), val:t('home.monthVal', { n: ms.noJunk, days: ms.days }), pct:Math.min(ms.noJunk/ms.days*100,100), done:ms.noJunk>=ms.days},
+    {emoji:'🏃', title:t('home.miniGoal.run'), val:t('home.monthVal', { n: ms.run, days: ms.days }), pct:Math.min(ms.run/ms.days*100,100), done:ms.run>=ms.days},
   ];
   document.getElementById('miniGoals').innerHTML = goals.map(function(g){
     return '<div class="mini-goal">'+
       '<div class="mini-goal-top"><span class="mini-goal-emoji">'+g.emoji+'</span>'+
-      '<span class="mini-goal-status '+(g.done?'done':'active')+'">'+(g.done?'Perfect':'Active')+'</span></div>'+
+      '<span class="mini-goal-status '+(g.done?'done':'active')+'">'+(g.done?t('home.perfect'):t('home.active'))+'</span></div>'+
       '<div class="mini-goal-title">'+g.title+'</div>'+
       '<div class="mini-goal-bar-wrap"><div class="mini-goal-bar" style="width:'+Math.min(g.pct,100)+'%"></div></div>'+
       '<div class="mini-goal-val">'+g.val+' · '+monthName+'</div></div>';
@@ -1208,7 +1367,7 @@ function renderTodoWidget() {
   var todayTodos = state.todos[todayKey()] || [];
   var el = document.getElementById('todayTodoList');
   if (!el) return;
-  if (!todayTodos.length) { el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">No tasks yet — add some for tomorrow</div>'; return; }
+  if (!todayTodos.length) { el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">'+t('todo.noTasksTomorrow')+'</div>'; return; }
   el.innerHTML = todayTodos.map(function(t,i){
     return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border:1px solid '+(t.done?'var(--gold-mid)':'var(--border)')+';border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="toggleTodo('+i+')">' +
       '<div style="width:18px;height:18px;border-radius:5px;border:2px solid '+(t.done?'var(--gold)':'var(--border)')+';background:'+(t.done?'var(--gold)':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#000;">'+(t.done?'✓':'')+'</div>'+
@@ -1230,13 +1389,13 @@ function renderFrontTodo() {
         '<span style="font-size:12px;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+';flex:1;">'+t.text+'</span>'+
       '</div>';
     }).join('')
-    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">No tasks yet — <span style="color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">add a task</span></div>';
+    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">'+t('home.noTasks')+' — <span style="color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">'+t('home.addTask')+'</span></div>';
   el.innerHTML = '<div class="goal-card home-card">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'+
-      '<span style="font-size:12px;font-weight:600;">📋 Today\'s Tasks</span>'+
-      '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);">'+done+'/'+total+' done</span>'+
+      '<span style="font-size:12px;font-weight:600;">📋 '+t('home.todaysTasks')+'</span>'+
+      '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);">'+t('home.doneCount', { done: done, total: total })+'</span>'+
     '</div>'+ listHtml +
-    '<div style="text-align:right;margin-top:6px;"><span style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">Manage tasks →</span></div>'+
+    '<div style="text-align:right;margin-top:6px;"><span style="font-size:10px;color:var(--gold);cursor:pointer;" onclick="event.stopPropagation();goToTodoList()">'+t('home.manageTasks')+' →</span></div>'+
   '</div>';
 }
 
@@ -1299,12 +1458,12 @@ function saveDisplayName() {
   var inp = document.getElementById('nameInput');
   if (!inp) return;
   var name = inp.value.trim();
-  if (!name) { showToast('Enter your name'); return; }
+  if (!name) { showToast(t('toast.enterName')); return; }
   state.profileName = name;
   if (!state.yearlyGoalLocked) {
     var goalInp = document.getElementById('yearlyGoalInput');
     var yg = goalInp ? parseInt(goalInp.value, 10) : 300;
-    if (!yg || yg < 1 || yg > 365) { showToast('Enter yearly target (1–365)'); return; }
+    if (!yg || yg < 1 || yg > 365) { showToast(t('toast.enterYearlyTarget')); return; }
     state.yearlyProductiveGoal = yg;
     state.yearlyGoalLocked = true;
     state.startDate = todayKey();
@@ -1313,7 +1472,7 @@ function saveDisplayName() {
   renderUserDisplay();
   renderHero();
   closeNameOverlay();
-  showToast('Welcome, ' + getProfileFirstName() + '!');
+  showToast(t('toast.welcome', { name: getProfileFirstName() }));
 }
 
 function openSettings() {
@@ -1334,12 +1493,13 @@ function openSettings() {
   }
   if (ygNote) {
     ygNote.textContent = state.yearlyGoalLocked
-      ? 'Locked on first setup — cannot change.'
-      : 'Set once — cannot change after saving.';
+      ? t('settings.yearlyLocked')
+      : t('settings.yearlyOnce');
   }
   if (wtInp) wtInp.value = getWorkGoalTitle();
   if (wxInp) wxInp.value = getWorkGoalText();
   if (ov) ov.className = 'secret-overlay';
+  applyStaticLocale();
 }
 
 function closeSettings() {
@@ -1355,17 +1515,17 @@ function saveSettings() {
   var wxInp = document.getElementById('settingsWorkTextInput');
   if (nameInp) {
     var name = nameInp.value.trim();
-    if (!name) { showToast('Enter your name'); return; }
+    if (!name) { showToast(t('toast.enterName')); return; }
     state.profileName = name;
   }
   if (thInp) {
     var th = parseInt(thInp.value, 10);
-    if (!th || th < 1 || th > CHECKS.length) { showToast('Checks needed: 1–' + CHECKS.length); return; }
+    if (!th || th < 1 || th > CHECKS.length) { showToast(t('toast.checksNeeded', { n: CHECKS.length })); return; }
     state.productiveThreshold = th;
   }
   if (ygInp && !state.yearlyGoalLocked) {
     var yg = parseInt(ygInp.value, 10);
-    if (!yg || yg < 1 || yg > 365) { showToast('Yearly target: 1–365'); return; }
+    if (!yg || yg < 1 || yg > 365) { showToast(t('toast.yearlyTarget')); return; }
     state.yearlyProductiveGoal = yg;
     state.yearlyGoalLocked = true;
   }
@@ -1378,7 +1538,7 @@ function saveSettings() {
   renderChecklist();
   if (document.getElementById('panel-tapan') && document.getElementById('panel-tapan').classList.contains('active')) renderTapan();
   closeSettings();
-  showToast('Settings saved');
+  showToast(t('toast.settingsSaved'));
 }
 
 function promptDisplayNameIfNeeded() {
@@ -1441,9 +1601,10 @@ function renderChecklist(skipSleepSync) {
   var entry=getTodayEntry();
   document.getElementById('checklist').innerHTML = CHECKS.map(function(c){
     var done=!!(entry.checks&&entry.checks[c.id]);
+    var ct = getCheckTexts(c.id);
     return '<div class="check-item '+(done?'done':'')+'" onclick="toggleCheck(\''+c.id+'\')">' +
       '<span class="check-emoji">'+c.emoji+'</span>'+
-      '<div class="check-text"><div class="check-name">'+c.name+'</div><div class="check-desc">'+c.desc+'</div></div>'+
+      '<div class="check-text"><div class="check-name">'+ct.name+'</div><div class="check-desc">'+ct.desc+'</div></div>'+
       '<div class="check-icon">'+(done?'✓':'')+'</div></div>';
   }).join('');
   rolloverTodos();
@@ -1464,7 +1625,7 @@ function saveDiary() {
   renderHero();
   renderMiniGoals();
   if (document.getElementById('panel-calendar') && document.getElementById('panel-calendar').classList.contains('active')) renderCalendar();
-  showToast(isProductive(state.days[k]) ? 'Diary saved — productive day!' : 'Diary saved');
+  showToast(isProductive(state.days[k]) ? t('toast.diaryProductive') : t('toast.diarySaved'));
 }
 
 function toggleCheck(id) {
@@ -1487,7 +1648,7 @@ function changeMonth(dir) {
 
 function renderCalendar() {
   var now=new Date(); now.setHours(0,0,0,0);
-  var monthName=new Date(calYear,calMonth,1).toLocaleString('en',{month:'long'});
+  var monthName=new Date(calYear,calMonth,1).toLocaleString(getLang()==='en'?'en':'hi',{month:'long'});
   var daysInMon=new Date(calYear,calMonth+1,0).getDate();
   var firstDay=new Date(calYear,calMonth,1).getDay();
   document.getElementById('calMonthTitle').textContent=monthName+' '+calYear;
@@ -1516,21 +1677,21 @@ function renderCalendar() {
     }).join('');
     return '<div class="week-row"><span class="week-label">W'+(wi+1)+'</span>'+days+'</div>';
   }).join('');
-  document.getElementById('calProdCount').textContent=prodCount+' productive day'+(prodCount!==1?'s':'')+' this month';
+  document.getElementById('calProdCount').textContent=t('calendar.prodDaysMonth', { n: prodCount, s: prodCount !== 1 ? 's' : '' });
   var ms = getMonthHabitStats(calYear, calMonth);
   var statsEl = document.getElementById('calMonthStats');
   if (statsEl) {
     var statCard = function(emoji, title, count) {
       return '<div class="cal-stat-card"><div class="cal-stat-title">'+emoji+' '+title+'</div>'+
-        '<div class="cal-stat-val">'+count+' / '+ms.days+' days</div></div>';
+        '<div class="cal-stat-val">'+count+' / '+ms.days+' '+t('calendar.daysUnit')+'</div></div>';
     };
     statsEl.innerHTML =
-      '<div class="section-title" style="margin-top:16px;margin-bottom:10px;">Monthly Habit Log — '+monthName+'</div>'+
+      '<div class="section-title" style="margin-top:16px;margin-bottom:10px;">'+t('calendar.monthlyHabitLog', { month: monthName })+'</div>'+
       '<div class="cal-month-stats">'+
-        statCard('📱','Reels & Visuals', ms.noReels)+
-        statCard('🍬','No Sugar', ms.noSugar)+
-        statCard('🍔','No Junk', ms.noJunk)+
-        statCard('🏃','30 min Run', ms.run)+
+        statCard('📱', t('home.miniGoal.reels'), ms.noReels)+
+        statCard('🍬', t('home.miniGoal.noSugar'), ms.noSugar)+
+        statCard('🍔', t('home.miniGoal.noJunk'), ms.noJunk)+
+        statCard('🏃', t('home.miniGoal.run'), ms.run)+
       '</div>';
   }
 }
@@ -1541,12 +1702,12 @@ function renderGoals() {
   var noReelsDays=ms.noReels, noSugarDays=ms.noSugar, noJunkDays=ms.noJunk, runDays=ms.run, monthDays=ms.days;
   var btnStyle='font-size:10px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:6px;padding:2px 8px;cursor:pointer;';
   document.getElementById('goalsList').innerHTML=
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">📱</span><span class="goal-title">No Reels & Visuals</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noReelsDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noReelsDays+' / '+monthDays+' days this month — see Calendar for past months</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍬</span><span class="goal-title">No Sugar Habit</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noSugarDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noSugarDays+' / '+monthDays+' sugar-free days this month</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">💪</span><span class="goal-title">Body Fat below 3%</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+(state.goals.bodyfat||0)+'%"></div></div><div class="goal-note">See Body tab for full tracking  <button onclick="switchTab(\'body\')" style="'+btnStyle+'">Open Body Tab</button></div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍔</span><span class="goal-title">No Junk Food</span><span class="goal-status active">Active</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noJunkDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+noJunkDays+' / '+monthDays+' junk-free days this month</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🏃</span><span class="goal-title">30 min Run</span><span class="goal-status '+(runDays>=monthDays?'done':'active')+'">'+(runDays>=monthDays?'Perfect':'Active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(runDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+runDays+' / '+monthDays+' run days this month (check Workout daily)</div></div>'+
-    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">Daily Measures (need '+getProductiveThreshold()+'/'+CHECKS.length+')</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+c.name+'</span>';}).join('')+'</div></div>';
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">📱</span><span class="goal-title">'+t('goals.noReels')+'</span><span class="goal-status active">'+t('common.active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noReelsDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+t('goals.noteReels', { n: noReelsDays, days: monthDays })+'</div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍬</span><span class="goal-title">'+t('goals.noSugarHabit')+'</span><span class="goal-status active">'+t('common.active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noSugarDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+t('goals.noteSugar', { n: noSugarDays, days: monthDays })+'</div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">💪</span><span class="goal-title">'+t('goals.bodyFatBelow3')+'</span><span class="goal-status active">'+t('common.active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+(state.goals.bodyfat||0)+'%"></div></div><div class="goal-note">'+t('goals.noteBodyFat')+'  <button onclick="switchTab(\'body\')" style="'+btnStyle+'">'+t('goals.openBodyTab')+'</button></div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🍔</span><span class="goal-title">'+t('goals.noJunkFood')+'</span><span class="goal-status active">'+t('common.active')+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(noJunkDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+t('goals.noteJunk', { n: noJunkDays, days: monthDays })+'</div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">🏃</span><span class="goal-title">'+t('goals.run30min')+'</span><span class="goal-status '+(runDays>=monthDays?'done':'active')+'">'+(runDays>=monthDays?t('common.perfect'):t('common.active'))+'</span></div><div class="goal-bar-wrap"><div class="goal-bar" style="width:'+Math.min(runDays/monthDays*100,100)+'%"></div></div><div class="goal-note">'+t('goals.noteRun', { n: runDays, days: monthDays })+'</div></div>'+
+    '<div class="goal-card"><div class="goal-top"><span class="goal-emoji">⚙️</span><span class="goal-title">'+t('goals.dailyMeasures', { n: getProductiveThreshold(), total: CHECKS.length })+'</span></div><div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px;">'+CHECKS.map(function(c){var ct=getCheckTexts(c.id);return '<span style="font-size:11px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;padding:3px 9px;">'+c.emoji+' '+ct.name+'</span>';}).join('')+'</div></div>';
 }
 
 // ── BODY TAB ──
@@ -1569,62 +1730,62 @@ function renderBody() {
 
   var html=
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">'+
-      '<div class="section-title" style="margin-bottom:8px;">Your Measurements</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">Enter height for BMI and body-fat math. Log weight when you weigh in — nothing is assumed.</div>'+
+      '<div class="section-title" style="margin-bottom:8px;">'+t('body.measurements')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5;">'+t('body.measurementsHint')+'</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-end;">'+
-        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Height (cm)</label>'+
+        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('body.height')+'</label>'+
           '<input id="height-input" type="number" step="0.1" min="100" max="250" placeholder="e.g. 175" value="'+(h ? h : '')+'" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;"></div>'+
-        '<button onclick="saveHeight()" style="padding:11px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;">SAVE HEIGHT</button>'+
+        '<button onclick="saveHeight()" style="padding:11px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;">'+t('body.saveHeight')+'</button>'+
       '</div>'+
     '</div>'+
 
     // Stats grid
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'+
-      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Current Weight</div>'+
+      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">'+t('body.weight')+'</div>'+
         '<div style="font-family:var(--mono);font-size:38px;color:var(--gold);font-weight:700;line-height:1;">'+(wt !== null ? wt : '—')+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">'+(wt !== null ? 'kg' : 'Log below')+'</div></div>'+
-      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Body Fat %</div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+(wt !== null ? t('body.kg') : t('body.logBelow'))+'</div></div>'+
+      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">'+t('body.bodyFat')+'</div>'+
         '<div style="font-family:var(--mono);font-size:38px;color:var(--gold);font-weight:700;line-height:1;">'+(bf?bf.toFixed(1):'?')+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">% (Navy method)</div></div>'+
-      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">BMI</div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+t('body.navyLabel')+'</div></div>'+
+      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">'+t('body.bmi')+'</div>'+
         '<div style="font-family:var(--mono);font-size:28px;color:var(--text);font-weight:700;line-height:1;">'+(bmi !== null ? bmi.toFixed(1) : '—')+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">'+(bmi !== null ? (bmi>25?'Overweight':'Normal') : (h ? 'Log weight' : 'Set height & weight'))+'</div></div>'+
-      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Target at 3% BF</div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+(bmi !== null ? (bmi>25?t('body.overweight'):t('body.normal')) : (h ? t('body.logWeightHint') : t('body.setHeightWeight')))+'</div></div>'+
+      '<div class="goal-card" style="text-align:center;"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">'+t('body.targetBf3')+'</div>'+
         '<div style="font-family:var(--mono);font-size:28px;color:var(--text);font-weight:700;line-height:1;">'+targetWT+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">kg</div></div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+t('body.kg')+'</div></div>'+
     '</div>'+
 
     // Log weight — INLINE form, no prompt()
     '<div class="goal-card" style="margin-bottom:14px;">'+
-      '<div class="section-title" style="margin-bottom:8px;">Log Weight</div>'+
+      '<div class="section-title" style="margin-bottom:8px;">'+t('body.logWeight')+'</div>'+
       sparkline+
       '<div style="display:flex;gap:8px;margin-bottom:8px;">'+
         '<input id="wt-input" type="number" step="0.1" placeholder="e.g. 86.5 kg" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;">'+
-        '<input id="wt-note" type="text" placeholder="Note (optional)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">'+
+        '<input id="wt-note" type="text" placeholder="'+t('money.noteOptional')+'" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">'+
       '</div>'+
-      '<button onclick="logWeight()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">SAVE WEIGHT</button>'+
+      '<button onclick="logWeight()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">'+t('body.saveWeight')+'</button>'+
       (wLog.slice(-5).reverse().map(function(e){return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-top:1px solid var(--border);margin-top:6px;"><span style="font-family:var(--mono);color:var(--muted);">'+e.date+'</span><span style="color:var(--gold);font-family:var(--mono);font-weight:700;">'+e.weight+' kg</span>'+(e.note?'<span style="color:var(--muted);font-size:10px;max-width:100px;overflow:hidden;">'+e.note+'</span>':'')+'</div>';}).join(''))+
     '</div>'+
 
     // BF Calculator — always visible, not Sunday-gated
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">'+
-      '<div class="section-title" style="margin-bottom:4px;">Body Fat Calculator (Navy Method)</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Measure waist at navel level, neck just below larynx. Both in cm. Height must be saved above.</div>'+
+      '<div class="section-title" style="margin-bottom:4px;">'+t('body.navyMethod')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+t('body.navyHint')+'</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:8px;">'+
-        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Waist (cm)</label>'+
+        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('body.waist')+'</label>'+
           '<input id="bf-waist" type="number" step="0.1" placeholder="e.g. 92" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;"></div>'+
-        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Neck (cm)</label>'+
+        '<div style="flex:1;"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('body.neck')+'</label>'+
           '<input id="bf-neck" type="number" step="0.1" placeholder="e.g. 38" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px;outline:none;"></div>'+
       '</div>'+
       '<div id="bfPreview" style="font-family:var(--mono);font-size:12px;color:var(--muted);min-height:18px;margin-bottom:8px;"></div>'+
-      '<button onclick="saveBF()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">CALCULATE AND SAVE</button>'+
+      '<button onclick="saveBF()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">'+t('body.calcSave')+'</button>'+
       (state.bfLog.length?'<div style="margin-top:10px;">'+state.bfLog.slice(-5).reverse().map(function(e){return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-top:1px solid var(--border);"><span style="font-family:var(--mono);color:var(--muted);">'+e.date+'</span><span style="color:var(--gold);font-family:var(--mono);font-weight:700;">'+e.bf.toFixed(1)+'%</span><span style="color:var(--muted);font-size:10px;">W:'+e.waist+' N:'+e.neck+'</span></div>';}).join('')+'</div>':'')+ 
     '</div>'+
 
     // Diet plan collapsible
     '<div class="goal-card" style="margin-bottom:14px;">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDiet()">'+
-        '<div style="font-size:14px;font-weight:600;">🥗 Your Personalised Diet Plan</div>'+
+        '<div style="font-size:14px;font-weight:600;">🥗 '+t('body.dietPlan')+'</div>'+
         '<span id="dietToggle" style="font-size:20px;color:var(--gold);">+</span>'+
       '</div>'+
       '<div style="font-size:11px;color:var(--muted);margin-top:4px;">'+DIET_PLAN.calories+' kcal · '+DIET_PLAN.protein+'g protein · '+DIET_PLAN.note+'</div>'+
@@ -1646,7 +1807,7 @@ function renderBody() {
       var prev=document.getElementById('bfPreview');
       var height=getHeightCm();
       if(!height){
-        prev.textContent='Save your height first';
+        prev.textContent=t('body.saveHeightFirst');
         prev.style.color='#e05252';
         return;
       }
@@ -1655,13 +1816,13 @@ function renderBody() {
         var wt2=latestWeight();
         if (wt2 !== null) {
           var lean=(wt2*(1-bf/100)).toFixed(1);
-          prev.textContent='Preview: '+bf.toFixed(1)+'% BF — Lean mass: '+lean+' kg';
+          prev.textContent=t('body.previewBf', { n: bf.toFixed(1), lean: lean });
         } else {
-          prev.textContent='Preview: '+bf.toFixed(1)+'% BF — log weight for lean mass';
+          prev.textContent=t('body.previewBfOnly', { n: bf.toFixed(1) });
         }
         prev.style.color='var(--gold)';
       } else {
-        prev.textContent=w&&n&&w<=n?'Waist must be greater than neck':'';
+        prev.textContent=w&&n&&w<=n?t('body.waistGtNeck'):'';
         prev.style.color='#e05252';
       }
     });
@@ -1672,11 +1833,11 @@ function saveHeight() {
   var el = document.getElementById('height-input');
   if (!el) return;
   var v = parseFloat(el.value);
-  if (isNaN(v) || v < 100 || v > 250) { showToast('Enter height between 100–250 cm'); return; }
+  if (isNaN(v) || v < 100 || v > 250) { showToast(t('toast.heightRange')); return; }
   state.heightCm = v;
   saveState(state);
   renderBody();
-  showToast('Height saved: ' + v + ' cm');
+  showToast(t('toast.heightSaved', { n: v }));
 }
 
 function toggleDiet(){
@@ -1688,62 +1849,59 @@ function toggleDiet(){
 function logWeight(){
   var v=parseFloat(document.getElementById('wt-input').value);
   var note=(document.getElementById('wt-note').value||'').trim();
-  if(isNaN(v)||v<30||v>300){showToast('Enter a valid weight (30-300 kg)');return;}
+  if(isNaN(v)||v<30||v>300){showToast(t('toast.weightInvalid'));return;}
   state.weightLog.push({date:todayKey(),weight:v,note:note});
   document.getElementById('wt-input').value='';
   document.getElementById('wt-note').value='';
   saveState(state); renderBody(); renderMiniGoals();
-  showToast('Weight logged: '+v+' kg');
+  showToast(t('toast.weightLogged', { n: v }));
 }
 
 function saveBF(){
   var waist=parseFloat(document.getElementById('bf-waist').value);
   var neck =parseFloat(document.getElementById('bf-neck').value);
   var height=getHeightCm();
-  if(!height){ showToast('Save your height first'); return; }
+  if(!height){ showToast(t('toast.saveHeightFirst')); return; }
   if(isNaN(waist)||isNaN(neck)||waist<=neck||neck<=0){
-    showToast('Check measurements — waist must be > neck'); return;
+    showToast(t('toast.waistNeck')); return;
   }
   var bf=calcNavyBF(waist,neck,height);
   var wt=latestWeight();
-  var leanMsg = wt !== null ? ' — Lean: ' + (wt*(1-bf/100)).toFixed(1) + ' kg' : '';
+  var leanMsg = wt !== null ? t('toast.leanMass', { n: (wt*(1-bf/100)).toFixed(1) }) : '';
   state.bfLog.push({date:todayKey(),waist:waist,neck:neck,bf:bf});
   state.goals.bodyfat=Math.max(0,Math.min(100,Math.round((1-bf/3)*100)));
   saveState(state); renderBody(); renderMiniGoals();
-  showToast('BF: '+bf.toFixed(1)+'%'+leanMsg);
+  showToast(t('toast.bfSaved', { n: bf.toFixed(1) }) + leanMsg);
 }
 
 // ── TAPAN ──
 function renderTapan(){
+  var vibeOpt = function(v){ return '<option value="'+v+'"'+(v===3?' selected':'')+'>'+t('vibe.'+v)+'</option>'; };
   var html='<div class="goal-card" style="border-color:var(--gold-mid);background:var(--gold-dim);margin-bottom:16px;">'+
     '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">'+getWorkGoalTitle()+'</div>'+
     '<div style="font-size:11px;color:var(--muted);line-height:1.6;">'+getWorkGoalText()+'</div></div>'+
     '<div class="goal-card" style="margin-bottom:14px;">'+
-      '<div class="section-title" style="margin-bottom:10px;">Log Today</div>'+
+      '<div class="section-title" style="margin-bottom:10px;">'+t('work.logToday')+'</div>'+
       '<div style="display:flex;flex-direction:column;gap:8px;">'+
-        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">What manager said/noticed</label>'+
-          '<textarea id="tapan-said" rows="2" placeholder="e.g. Good PRD structure but needs more user data" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
-        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">What I did / built</label>'+
-          '<textarea id="tapan-did" rows="2" placeholder="e.g. Shipped dashboard v2 — manager called it clean" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
+        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('work.managerSaid')+'</label>'+
+          '<textarea id="tapan-said" rows="2" placeholder="'+t('work.saidPlaceholder')+'" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
+        '<div><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">'+t('work.whatIDid')+'</label>'+
+          '<textarea id="tapan-did" rows="2" placeholder="'+t('work.didPlaceholder')+'" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;resize:none;outline:none;"></textarea></div>'+
         '<div style="display:flex;gap:8px;align-items:center;">'+
-          '<label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;">Vibe</label>'+
+          '<label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;white-space:nowrap;">'+t('work.vibe')+'</label>'+
           '<select id="tapan-vibe" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 10px;outline:none;">'+
-            '<option value="5">🔥 Crushed it</option>'+
-            '<option value="4">✅ Solid day</option>'+
-            '<option value="3" selected>😐 Average</option>'+
-            '<option value="2">😬 Below par</option>'+
-            '<option value="1">❌ Bad day</option>'+
+            vibeOpt(5)+vibeOpt(4)+vibeOpt(3)+vibeOpt(2)+vibeOpt(1)+
           '</select></div>'+
       '</div>'+
-      '<button onclick="saveTapan()" style="width:100%;margin-top:10px;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">LOG WORK ENTRY</button>'+
+      '<button onclick="saveTapan()" style="width:100%;margin-top:10px;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">'+t('work.logEntry')+'</button>'+
     '</div>';
   if(state.tapanLog.length){
     var avgVibe=(state.tapanLog.reduce(function(a,e){return a+(+e.vibe||3);},0)/state.tapanLog.length).toFixed(1);
     var vibeEmoji=avgVibe>=4?'🔥':avgVibe>=3?'✅':'⚠️';
     html+='<div class="goal-card" style="margin-bottom:14px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<span style="font-size:13px;font-weight:600;">Feedback Log</span>'+
-        '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);">'+vibeEmoji+' Avg: '+avgVibe+'/5</span>'+
+        '<span style="font-size:13px;font-weight:600;">'+t('work.feedbackLog')+'</span>'+
+        '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);">'+vibeEmoji+' '+t('work.avgVibe', { n: avgVibe })+'</span>'+
       '</div>'+
       state.tapanLog.slice(-10).reverse().map(function(e){
         var vm={'5':'🔥','4':'✅','3':'😐','2':'😬','1':'❌'};
@@ -1761,10 +1919,10 @@ function saveTapan(){
   var said=document.getElementById('tapan-said').value.trim();
   var did =document.getElementById('tapan-did').value.trim();
   var vibe=document.getElementById('tapan-vibe').value;
-  if(!said&&!did){showToast('Add at least one field');return;}
+  if(!said&&!did){showToast(t('toast.addOneField'));return;}
   state.tapanLog.push({date:todayKey(),said:said,did:did,vibe:vibe});
   saveState(state); renderTapan();
-  showToast('Work entry logged!');
+  showToast(t('toast.workLogged'));
 }
 
 // ── HISTORY ──
@@ -1772,18 +1930,18 @@ function renderHistory(){
   var entries=Object.keys(state.days).map(function(k){return [k, state.days[k]];})
     .filter(function(p){var e=p[1];return e.ts||Object.keys(e.checks||{}).map(function(_k){return e.checks||{}[_k];}).some(Boolean);})
     .sort(function(a,b){return b[0].localeCompare(a[0]);}).slice(0,30);
-  if(!entries.length){document.getElementById('historyContent').innerHTML='<div class="no-history">No entries yet. Log your first day!</div>';return;}
+  if(!entries.length){document.getElementById('historyContent').innerHTML='<div class="no-history">'+t('history.noEntries')+'</div>';return;}
   document.getElementById('historyContent').innerHTML=entries.map(function(pair){
     var key=pair[0],entry=pair[1];
     var date=new Date(key+'T00:00:00');
-    var dateStr=date.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+    var dateStr=date.toLocaleDateString(getLocaleCode(),{weekday:'short',day:'numeric',month:'short'});
     var doneChecks=CHECKS.filter(function(c){return entry.checks&&entry.checks[c.id];});
     var d=entry.diary||{}, prod=isProductive(entry);
     return '<div class="history-entry">'+
       '<div class="history-date">'+dateStr+(prod?' 🏆':'')+'</div>'+
       '<div class="history-checks">'+
-        doneChecks.map(function(c){return '<span class="history-chip">'+c.emoji+' '+c.name+'</span>';}).join('')+
-        (doneChecks.length?'':'<span style="font-size:10px;color:var(--muted)">No checks</span>')+
+        doneChecks.map(function(c){var ct=getCheckTexts(c.id);return '<span class="history-chip">'+c.emoji+' '+ct.name+'</span>';}).join('')+
+        (doneChecks.length?'':'<span style="font-size:10px;color:var(--muted)">'+t('history.noChecks')+'</span>')+
       '</div>'+
       (d.word?'<div class="history-note">📖 <b>'+d.word+'</b></div>':'')+
       (d.learned?'<div class="history-note">💡 '+d.learned+'</div>':'')+
@@ -1856,10 +2014,13 @@ function sortExpenseRows(rows) {
 }
 
 function getAllCategories() {
+  var base = BASE_EXPENSE_CATEGORIES.map(function(c) {
+    return { id: c.id, label: getCategoryLabel(c.id), emoji: c.emoji, color: c.color, custom: false };
+  });
   var custom = (state.customCategories || []).map(function(c) {
     return { id: c.id, label: c.label, emoji: c.emoji || '🏷️', color: c.color || '#888', custom: true };
   });
-  return BASE_EXPENSE_CATEGORIES.concat(custom);
+  return base.concat(custom);
 }
 
 function getCategoryById(id) {
@@ -1892,10 +2053,10 @@ function getMonthStartKey() {
 
 function getExpenseDateRange(range) {
   var today = todayKey();
-  if (range === 'today') return { start: today, end: today, label: 'Today' };
-  if (range === 'week') return { start: getWeekStartKey(), end: today, label: 'This Week' };
-  if (range === 'month') return { start: getMonthStartKey(), end: today, label: 'This Month' };
-  return { start: null, end: null, label: 'All Time' };
+  if (range === 'today') return { start: today, end: today, label: t('money.rangeToday') };
+  if (range === 'week') return { start: getWeekStartKey(), end: today, label: t('money.rangeWeek') };
+  if (range === 'month') return { start: getMonthStartKey(), end: today, label: t('money.rangeMonth') };
+  return { start: null, end: null, label: t('money.rangeAll') };
 }
 
 function expenseEntryKey(e) {
@@ -2069,21 +2230,21 @@ function renderExpenseEditRow(row) {
     return '<option value="' + c.id + '"' + (e.cat === c.id ? ' selected' : '') + '>' + c.emoji + ' ' + c.label + '</option>';
   }).join('');
   return '<div style="padding:12px;margin:6px 0;background:var(--black);border:1px solid var(--gold-mid);border-radius:10px;">' +
-    '<div style="font-size:11px;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">Edit expense</div>' +
+    '<div style="font-size:11px;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">'+t('money.editExpense')+'</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">' +
-      '<div><label style="font-size:10px;color:var(--muted);">Tag</label>' +
+      '<div><label style="font-size:10px;color:var(--muted);">'+t('money.tag')+'</label>' +
         '<select id="editExpCat" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px;outline:none;">' + catOptions + '</select></div>' +
-      '<div><label style="font-size:10px;color:var(--muted);">Amount (Rs)</label>' +
+      '<div><label style="font-size:10px;color:var(--muted);">'+t('money.amountRs')+'</label>' +
         '<input id="editExpAmount" type="number" step="0.01" value="' + (e.amount || 0) + '" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px;outline:none;"></div>' +
-      '<div><label style="font-size:10px;color:var(--muted);">Date</label>' +
+      '<div><label style="font-size:10px;color:var(--muted);">'+t('money.date')+'</label>' +
         '<input id="editExpDate" type="date" value="' + row.dateKey + '" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px;outline:none;"></div>' +
-      '<div><label style="font-size:10px;color:var(--muted);">Time</label>' +
+      '<div><label style="font-size:10px;color:var(--muted);">'+t('money.time')+'</label>' +
         '<input id="editExpTime" type="time" value="' + expenseTimeToInput(e.time) + '" style="width:100%;margin-top:4px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px;outline:none;"></div>' +
     '</div>' +
-    '<input id="editExpNote" type="text" value="' + normalizeExpenseDash(e.note || '').replace(/"/g, '&quot;') + '" placeholder="Note (optional)" style="width:100%;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
+    '<input id="editExpNote" type="text" value="' + normalizeExpenseDash(e.note || '').replace(/"/g, '&quot;') + '" placeholder="'+t('money.noteOptional')+'" style="width:100%;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;">' +
     '<div style="display:flex;gap:8px;">' +
-      '<button onclick="saveExpenseEdit()" style="flex:1;padding:10px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">Save</button>' +
-      '<button onclick="cancelExpenseEdit()" style="flex:1;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">Cancel</button>' +
+      '<button onclick="saveExpenseEdit()" style="flex:1;padding:10px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">'+t('common.save')+'</button>' +
+      '<button onclick="cancelExpenseEdit()" style="flex:1;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">'+t('common.cancel')+'</button>' +
     '</div>' +
   '</div>';
 }
@@ -2096,9 +2257,9 @@ function renderExpenseRow(row) {
   var cat = getCategoryById(e.cat);
   var splitTxt = formatSplitSummary(e);
   var d = new Date(row.dateKey + 'T00:00:00');
-  var ds = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  var ds = d.toLocaleDateString(getLocaleCode(), { weekday: 'short', day: 'numeric', month: 'short' });
   var noteText = normalizeExpenseDash(e.note);
-  return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;" ondblclick="editExpense(\'' + row.dateKey + '\',' + row.idx + ')" title="Double-click to edit">' +
+  return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;" ondblclick="editExpense(\'' + row.dateKey + '\',' + row.idx + ')" title="'+t('money.doubleClickEdit')+'">' +
     '<span style="font-size:16px;">' + cat.emoji + '</span>' +
     '<div style="flex:1;">' +
       '<div style="font-size:12px;font-weight:500;">' + cat.label + (noteText ? ' - ' + noteText : '') + '</div>' +
@@ -2110,7 +2271,7 @@ function renderExpenseRow(row) {
         '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + expenseMyAmount(e).toLocaleString('en-IN') + '</span>'
       : '<span style="font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;">Rs ' + (e.amount || 0).toLocaleString('en-IN') + '</span>') +
     '</div>' +
-    '<button onclick="event.stopPropagation();deleteExpense(\'' + row.dateKey + '\',' + row.idx + ')" ondblclick="event.stopPropagation();" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Delete">x</button>' +
+    '<button onclick="event.stopPropagation();deleteExpense(\'' + row.dateKey + '\',' + row.idx + ')" ondblclick="event.stopPropagation();" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="'+t('common.delete')+'">x</button>' +
   '</div>';
 }
 
@@ -2161,17 +2322,17 @@ function renderFriendSplitPanel(rows) {
   (state.friends || []).forEach(function(n) { names[n] = 1; });
   var nameList = Object.keys(names).sort();
   if (!nameList.length) {
-    return '<div style="font-size:11px;color:var(--muted);padding:8px 0;">No split data yet. Add friends and split an expense.</div>';
+    return '<div style="font-size:11px;color:var(--muted);padding:8px 0;">'+t('money.noSplitData')+'</div>';
   }
-  return '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Split give / take</div>' +
+  return '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">'+t('money.splitGiveTake')+'</div>' +
     nameList.map(function(name) {
       var all = allBalances[name] || 0;
       var view = viewBalances[name] || 0;
-      var allTxt = all > 0 ? 'Owes you Rs ' + Math.round(all).toLocaleString('en-IN') :
-        all < 0 ? 'You owe Rs ' + Math.round(Math.abs(all)).toLocaleString('en-IN') : 'All time: settled';
-      var viewTxt = view > 0 ? 'This view: owes Rs ' + Math.round(view).toLocaleString('en-IN') :
-        view < 0 ? 'This view: you owe Rs ' + Math.round(Math.abs(view)).toLocaleString('en-IN') :
-        (view === 0 && all !== 0 ? 'This view: no split activity' : '');
+      var allTxt = all > 0 ? t('money.owesYouAllTime', { n: Math.round(all).toLocaleString('en-IN') }) :
+        all < 0 ? t('money.youOweAllTime', { n: Math.round(Math.abs(all)).toLocaleString('en-IN') }) : t('money.allTimeSettled');
+      var viewTxt = view > 0 ? t('money.thisViewOwes', { n: Math.round(view).toLocaleString('en-IN') }) :
+        view < 0 ? t('money.thisViewYouOwe', { n: Math.round(Math.abs(view)).toLocaleString('en-IN') }) :
+        (view === 0 && all !== 0 ? t('money.thisViewNoSplit') : '');
       var col = all > 0 ? 'var(--gold)' : (all < 0 ? '#e05252' : 'var(--muted)');
       return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:12px;padding:8px 0;border-bottom:1px solid var(--border);">' +
         '<span>👤 ' + name + '</span>' +
@@ -2213,14 +2374,14 @@ function addFriend() {
   var inp = document.getElementById('friendNameInput');
   if (!inp) return;
   var name = inp.value.trim();
-  if (!name) { showToast('Enter a name'); return; }
+  if (!name) { showToast(t('toast.enterFriendName')); return; }
   if (!state.friends) state.friends = [];
-  if (state.friends.indexOf(name) !== -1) { showToast('Already added'); return; }
+  if (state.friends.indexOf(name) !== -1) { showToast(t('toast.alreadyAdded')); return; }
   state.friends.push(name);
   inp.value = '';
   saveState(state);
   renderMoney();
-  showToast('Friend added');
+  showToast(t('toast.friendAdded'));
 }
 
 function removeFriend(idx) {
@@ -2236,12 +2397,12 @@ function addCustomCategory() {
   var budgetInp = document.getElementById('customCatBudget');
   if (!labelInp) return;
   var label = labelInp.value.trim();
-  if (!label) { showToast('Enter tag name'); return; }
+  if (!label) { showToast(t('toast.enterTagName')); return; }
   var id = 'tag_' + label.toLowerCase().replace(/[^a-z0-9]+/g, '_');
   if (!state.customCategories) state.customCategories = [];
   var exists = false;
   getAllCategories().forEach(function(c) { if (c.id === id) exists = true; });
-  if (exists) { showToast('Tag already exists'); return; }
+  if (exists) { showToast(t('toast.tagExists')); return; }
   state.customCategories.push({ id: id, label: label, emoji: emojiInp && emojiInp.value.trim() ? emojiInp.value.trim() : '🏷️' });
   if (!state.budgets) state.budgets = {};
   state.budgets[id] = budgetInp && budgetInp.value ? +budgetInp.value : 0;
@@ -2250,7 +2411,7 @@ function addCustomCategory() {
   if (budgetInp) budgetInp.value = '';
   saveState(state);
   renderMoney();
-  showToast('Tag added');
+  showToast(t('toast.tagAdded'));
 }
 
 function removeCustomCategory(idx) {
@@ -2291,11 +2452,11 @@ function renderSplitInputs() {
   var selected = getSelectedSplitFriends();
   var amt = +((document.getElementById('expAmount') || {}).value || 0);
   var readOnly = mode === 'equal' ? 'readonly' : '';
-  var html = '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:8px 0 6px;">Split breakdown</div>';
-  html += '<div style="display:grid;grid-template-columns:1fr 70px 90px;gap:6px;font-size:10px;color:var(--muted);margin-bottom:4px;"><span>Name</span><span>%</span><span>Rs</span></div>';
+  var html = '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:8px 0 6px;">'+t('money.splitBreakdown')+'</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 70px 90px;gap:6px;font-size:10px;color:var(--muted);margin-bottom:4px;"><span>'+t('money.name')+'</span><span>%</span><span>Rs</span></div>';
   if (includeMe) {
     html += '<div style="display:grid;grid-template-columns:1fr 70px 90px;gap:6px;align-items:center;margin-bottom:6px;">' +
-      '<span style="font-size:12px;">Me</span>' +
+      '<span style="font-size:12px;">'+t('money.me')+'</span>' +
       '<input id="split-my-pct" type="number" step="0.1" ' + readOnly + ' style="background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:6px;outline:none;" oninput="updateSplitPreview()">' +
       '<input id="split-my-amt" type="number" step="0.01" ' + readOnly + ' style="background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:6px;outline:none;" oninput="updateSplitPreview()">' +
     '</div>';
@@ -2335,7 +2496,7 @@ function applyEqualSplit(totalAmount) {
 function calcSplitAmounts(totalAmount) {
   var includeMe = document.getElementById('splitIncludeMe') ? document.getElementById('splitIncludeMe').checked : true;
   var selected = getSelectedSplitFriends();
-  if (!selected.length) return { ok: false, msg: 'Select at least one friend' };
+  if (!selected.length) return { ok: false, msg: t('money.selectFriend') };
   var modeEl = document.getElementById('splitMode');
   var mode = modeEl ? modeEl.value : 'equal';
   if (mode === 'equal') {
@@ -2366,7 +2527,7 @@ function calcSplitAmounts(totalAmount) {
   var sum = Math.round((friendTotal + myShare) * 100) / 100;
   var target = Math.round(totalAmount * 100) / 100;
   if (Math.abs(sum - target) > 0.05) {
-    return { ok: false, msg: 'Split total Rs ' + sum.toFixed(2) + ' must equal Rs ' + target.toFixed(2) };
+    return { ok: false, msg: t('money.splitMustEqual', { sum: sum.toFixed(2), target: target.toFixed(2) }) };
   }
   return {
     ok: true,
@@ -2387,7 +2548,7 @@ function updateSplitPreview() {
   if (!prev || !amountEl || !splitCb || !splitCb.checked) return;
   var amt = +amountEl.value;
   if (!amt || amt <= 0) {
-    prev.textContent = 'Enter amount to see split';
+    prev.textContent = t('money.enterAmountSplit');
     if (validEl) validEl.textContent = '';
     return;
   }
@@ -2399,10 +2560,10 @@ function updateSplitPreview() {
     if (validEl) validEl.textContent = calc.msg;
     return;
   }
-  if (validEl) validEl.textContent = 'Split total matches Rs ' + amt.toLocaleString('en-IN');
-  prev.textContent = 'Your share: Rs ' + calc.myShare.toLocaleString('en-IN') +
+  if (validEl) validEl.textContent = t('money.splitMatches', { n: amt.toLocaleString('en-IN') });
+  prev.textContent = t('money.yourShareRs', { n: calc.myShare.toLocaleString('en-IN') }) +
     (calc.owed.length ? ' · ' + calc.owed.map(function(o) {
-      return o.name + ' owes Rs ' + o.amount.toLocaleString('en-IN') + (o.pct ? ' (' + o.pct + '%)' : '');
+      return t('money.owesRs', { name: o.name, n: o.amount.toLocaleString('en-IN') }) + (o.pct ? ' (' + o.pct + '%)' : '');
     }).join(' · ') : '');
 }
 
@@ -2417,11 +2578,11 @@ function formatSplitSummary(e) {
 function renderExpenseAnalysis(rows) {
   var notes = [];
   if (!rows.length) {
-    notes.push('No expenses in this view. Try switching to All Time or add a new expense.');
+    notes.push(t('money.analysis.noExpenses'));
     return notes;
   }
   var total = rows.reduce(function(s, r) { return s + expenseMyAmount(r.entry); }, 0);
-  notes.push('Total (your share): Rs ' + total.toLocaleString('en-IN') + ' across ' + rows.length + ' entries.');
+  notes.push(t('money.analysis.total', { total: total.toLocaleString('en-IN'), count: rows.length }));
   var byCat = {};
   var days = {};
   rows.forEach(function(r) {
@@ -2437,16 +2598,16 @@ function renderExpenseAnalysis(rows) {
   });
   if (topCat) {
     var catInfo = getCategoryById(topCat);
-    notes.push('Top category: ' + catInfo.emoji + ' ' + catInfo.label + ' — Rs ' + topAmt.toLocaleString('en-IN') + ' (' + Math.round(topAmt / total * 100) + '% of spend).');
+    notes.push(t('money.analysis.topCat', { emoji: catInfo.emoji, label: catInfo.label, amount: topAmt.toLocaleString('en-IN'), pct: Math.round(topAmt / total * 100) }));
   }
   var dayCount = Object.keys(days).length || 1;
-  notes.push('Average Rs ' + Math.round(total / dayCount).toLocaleString('en-IN') + ' per day with spending.');
+  notes.push(t('money.analysis.avgDay', { avg: Math.round(total / dayCount).toLocaleString('en-IN') }));
   getAllCategories().forEach(function(c) {
     var spent = byCat[c.id] || 0;
     var budget = (state.budgets || {})[c.id] || 0;
     if (!budget || !spent) return;
-    if (spent > budget) notes.push('Over budget on ' + c.label + ': Rs ' + spent.toLocaleString('en-IN') + ' / Rs ' + budget.toLocaleString('en-IN') + '.');
-    else if (spent > budget * 0.85) notes.push('Near budget on ' + c.label + ': ' + Math.round(spent / budget * 100) + '% used.');
+    if (spent > budget) notes.push(t('money.analysis.overBudget', { label: c.label, spent: spent.toLocaleString('en-IN'), budget: budget.toLocaleString('en-IN') }));
+    else if (spent > budget * 0.85) notes.push(t('money.analysis.nearBudget', { label: c.label, pct: Math.round(spent / budget * 100) }));
   });
   var owedTotal = 0;
   rows.forEach(function(r) {
@@ -2454,14 +2615,14 @@ function renderExpenseAnalysis(rows) {
       r.entry.split.owed.forEach(function(o) { owedTotal += o.amount || 0; });
     }
   });
-  if (owedTotal > 0) notes.push('Friends owe you Rs ' + Math.round(owedTotal).toLocaleString('en-IN') + ' in this period.');
+  if (owedTotal > 0) notes.push(t('money.analysis.friendsOwe', { n: Math.round(owedTotal).toLocaleString('en-IN') }));
   if (rows.length >= 2) {
     var half = Math.floor(rows.length / 2);
     var recent = rows.slice(0, half).reduce(function(s, r) { return s + expenseMyAmount(r.entry); }, 0);
     var older = rows.slice(half).reduce(function(s, r) { return s + expenseMyAmount(r.entry); }, 0);
-    if (recent > older * 1.2) notes.push('Trend: recent entries are spending heavier than earlier ones in this view.');
-    else if (recent < older * 0.8) notes.push('Trend: spending is cooling down compared to earlier entries in this view.');
-    else notes.push('Trend: spending pace looks steady in this view.');
+    if (recent > older * 1.2) notes.push(t('money.analysis.trendHeavy'));
+    else if (recent < older * 0.8) notes.push(t('money.analysis.trendCooling'));
+    else notes.push(t('money.analysis.trendSteady'));
   }
   return notes;
 }
@@ -2472,7 +2633,7 @@ function addExpense() {
   var note = document.getElementById('expNote');
   if (!state.expenses) state.expenses = {};
   if (!cat || !amount || !amount.value || isNaN(+amount.value) || +amount.value <= 0) {
-    showToast('Enter a valid amount');
+    showToast(t('toast.validAmount'));
     return;
   }
   var k = todayKey();
@@ -2506,7 +2667,7 @@ function addExpense() {
   saveState(state);
   renderMoney();
   renderFrontMoney();
-  showToast('Expense logged');
+  showToast(t('toast.expenseLogged'));
 }
 
 function deleteExpense(dateKey, idx) {
@@ -2521,7 +2682,7 @@ function deleteExpense(dateKey, idx) {
   saveState(state);
   renderMoney(true);
   renderFrontMoney();
-  showToast('Expense deleted');
+  showToast(t('toast.expenseDeleted'));
 }
 
 function editExpense(dateKey, idx) {
@@ -2546,9 +2707,9 @@ function saveExpenseEdit() {
   var timeEl = document.getElementById('editExpTime');
   var noteEl = document.getElementById('editExpNote');
   var amount = amtEl ? parseFloat(amtEl.value) : NaN;
-  if (isNaN(amount) || amount <= 0) { showToast('Enter valid amount'); return; }
+  if (isNaN(amount) || amount <= 0) { showToast(t('toast.enterValidAmount')); return; }
   var newDateKey = dateEl ? dateEl.value : oldKey;
-  if (!newDateKey) { showToast('Enter date'); return; }
+  if (!newDateKey) { showToast(t('toast.enterDate')); return; }
   var updated = {
     cat: catEl ? catEl.value : entry.cat,
     amount: amount,
@@ -2580,7 +2741,7 @@ function saveExpenseEdit() {
   saveState(state);
   renderMoney(true);
   renderFrontMoney();
-  showToast('Expense updated');
+  showToast(t('toast.expenseUpdated'));
 }
 
 function toggleMoneySearch() {
@@ -2611,7 +2772,7 @@ function removeBudgetTag(catId) {
   }
   saveState(state);
   renderMoney(true);
-  showToast('Budget tag removed');
+  showToast(t('toast.budgetRemoved'));
 }
 
 function saveBudget(catId) {
@@ -2621,7 +2782,7 @@ function saveBudget(catId) {
   state.budgets[catId] = +inp.value;
   saveState(state);
   renderMoney();
-  showToast('Budget updated');
+  showToast(t('toast.budgetUpdated'));
 }
 
 function renderFrontMoney() {
@@ -2638,7 +2799,7 @@ function renderFrontMoney() {
         '<span style="font-size:20px;">💰</span>' +
         '<div style="flex:1;">' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
-            '<span style="font-size:12px;font-weight:600;">This Month</span>' +
+            '<span style="font-size:12px;font-weight:600;">'+t('home.thisMonth')+'</span>' +
             '<span style="font-family:var(--mono);font-size:12px;color:' + color + ';">Rs ' + total.toLocaleString('en-IN') + ' / ' + totalBudget.toLocaleString('en-IN') + '</span>' +
           '</div>' +
           '<div style="background:var(--border);border-radius:3px;height:4px;">' +
@@ -2673,7 +2834,7 @@ function renderMoney(preserveScroll) {
   };
 
   var logExpenseBlock =
-    '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 10px;">Log new</div>' +
+    '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin:14px 0 10px;">'+t('money.logNew')+'</div>' +
     '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;" id="catButtons">' +
       cats.map(function(c) {
         return '<button onclick="selectCat(\'' + c.id + '\')" id="catBtn-' + c.id + '" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;">' + c.emoji + ' ' + c.label + '</button>';
@@ -2683,13 +2844,13 @@ function renderMoney(preserveScroll) {
     '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
       '<div style="position:relative;flex:1;">' +
         '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;">Rs</span>' +
-        '<input id="expAmount" type="number" placeholder="Amount" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px 10px 30px;outline:none;" onkeydown="if(event.key===\'Enter\')addExpense()" oninput="updateSplitPreview();renderSplitInputs();">' +
+        '<input id="expAmount" type="number" placeholder="'+t('money.amount')+'" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;padding:10px 12px 10px 30px;outline:none;" onkeydown="if(event.key===\'Enter\')addExpense()" oninput="updateSplitPreview();renderSplitInputs();">' +
       '</div>' +
-      '<input id="expNote" type="text" placeholder="Note (optional)" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">' +
+      '<input id="expNote" type="text" placeholder="'+t('money.noteOptional')+'" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;outline:none;">' +
     '</div>' +
     '<label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;">' +
       '<input type="checkbox" id="expSplit" onchange="toggleSplitPanel()" style="accent-color:var(--gold);">' +
-      ' Split with friends' +
+      ' '+t('money.splitFriends') +
     '</label>' +
     '<div id="splitPanel" style="display:none;margin-bottom:10px;padding:10px;background:var(--black);border:1px solid var(--border);border-radius:8px;">' +
       ((state.friends && state.friends.length) ?
@@ -2701,30 +2862,30 @@ function renderMoney(preserveScroll) {
             '</label>';
           }).join('') +
         '</div>'
-      : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add friends in the section below first.</div>') +
+      : '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">'+t('money.addFriendsFirst')+'</div>') +
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">' +
-        '<label style="font-size:11px;color:var(--muted);">Mode</label>' +
+        '<label style="font-size:11px;color:var(--muted);">'+t('money.mode')+'</label>' +
         '<select id="splitMode" onchange="onSplitModeChange()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px;outline:none;">' +
-          '<option value="equal">Equal split</option>' +
-          '<option value="custom">Custom % / amount</option>' +
+          '<option value="equal">'+t('money.splitEqual')+'</option>' +
+          '<option value="custom">'+t('money.splitCustom')+'</option>' +
         '</select>' +
         '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;">' +
           '<input type="checkbox" id="splitIncludeMe" checked onchange="renderSplitInputs();updateSplitPreview()" style="accent-color:var(--gold);">' +
-          ' Include me' +
+          ' '+t('money.includeMe') +
         '</label>' +
       '</div>' +
       '<div id="splitInputsArea"></div>' +
       '<div id="splitValidation" style="font-size:11px;color:#e05252;margin-top:6px;"></div>' +
       '<div id="splitPreview" style="font-size:11px;color:var(--gold);line-height:1.5;margin-top:6px;"></div>' +
     '</div>' +
-    '<button onclick="addExpense()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">ADD EXPENSE</button>';
+    '<button onclick="addExpense()" style="width:100%;padding:11px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;letter-spacing:.08em;">'+t('money.addExpense')+'</button>';
 
   var searchPanelBlock = searchOpen ?
     '<div style="margin:10px 0 0;padding:10px;background:var(--black);border:1px solid var(--border);border-radius:8px;">' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-        '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="Tag, amount, note, date, friend..." style="flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;" onkeydown="if(event.key===\'Enter\')runExpenseSearch()">' +
-        '<button onclick="runExpenseSearch()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">Search</button>' +
-        (search ? '<button onclick="clearExpenseSearch()" style="padding:9px 12px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">Clear</button>' : '') +
+        '<input id="expSearch" type="text" value="' + search.replace(/"/g, '') + '" placeholder="'+t('money.searchPlaceholder')+'" style="flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;" onkeydown="if(event.key===\'Enter\')runExpenseSearch()">' +
+        '<button onclick="runExpenseSearch()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">'+t('money.search')+'</button>' +
+        (search ? '<button onclick="clearExpenseSearch()" style="padding:9px 12px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">'+t('common.clear')+'</button>' : '') +
       '</div>' +
     '</div>' : '';
 
@@ -2735,26 +2896,26 @@ function renderMoney(preserveScroll) {
 
   var expenseListBlock = rows.length ?
     '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">' +
-      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Entries · newest first · double-click to edit</div>' +
+      '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">'+t('money.entriesHint')+'</div>' +
       rows.slice(0, 100).map(function(row) { return renderExpenseRow(row); }).join('') +
-      (rows.length > 100 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">Showing latest 100 of ' + rows.length + ' entries</div>' : '') +
+      (rows.length > 100 ? '<div style="font-size:11px;color:var(--muted);padding-top:8px;">'+t('money.showingLatest', { n: rows.length })+'</div>' : '') +
     '</div>'
-    : '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">No expenses match this view.</div>';
+    : '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);">'+t('money.noExpensesView')+'</div>';
 
   var expensesCard =
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">' +
-        '<span style="font-size:13px;font-weight:600;">Expenses</span>' +
+        '<span style="font-size:13px;font-weight:600;">'+t('money.expenses')+'</span>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">' +
-          '<button style="' + rangeBtnStyle(range === 'today') + '" onclick="setMoneyRange(\'today\')">Today</button>' +
-          '<button style="' + rangeBtnStyle(range === 'week') + '" onclick="setMoneyRange(\'week\')">Week</button>' +
-          '<button style="' + rangeBtnStyle(range === 'month') + '" onclick="setMoneyRange(\'month\')">Month</button>' +
-          '<button style="' + rangeBtnStyle(range === 'all') + '" onclick="setMoneyRange(\'all\')">All</button>' +
-          '<button onclick="toggleMoneySearch()" title="Search" style="' + iconBtn(searchOpen) + '">🔍</button>' +
-          '<button onclick="toggleMoneyFriendsPanel()" title="Split balances" style="' + iconBtn(friendsOpen) + '">👥</button>' +
+          '<button style="' + rangeBtnStyle(range === 'today') + '" onclick="setMoneyRange(\'today\')">'+t('money.today')+'</button>' +
+          '<button style="' + rangeBtnStyle(range === 'week') + '" onclick="setMoneyRange(\'week\')">'+t('money.week')+'</button>' +
+          '<button style="' + rangeBtnStyle(range === 'month') + '" onclick="setMoneyRange(\'month\')">'+t('money.month')+'</button>' +
+          '<button style="' + rangeBtnStyle(range === 'all') + '" onclick="setMoneyRange(\'all\')">'+t('money.all')+'</button>' +
+          '<button onclick="toggleMoneySearch()" title="'+t('money.search')+'" style="' + iconBtn(searchOpen) + '">🔍</button>' +
+          '<button onclick="toggleMoneyFriendsPanel()" title="'+t('money.splitBalances')+'" style="' + iconBtn(friendsOpen) + '">👥</button>' +
         '</div>' +
       '</div>' +
-      '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;">' + dr.label + ' · ' + rows.length + ' entries · Rs ' + total.toLocaleString('en-IN') + ' (your share)</div>' +
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:10px;">'+t('money.summaryLine', { label: dr.label, count: rows.length, total: total.toLocaleString('en-IN') })+'</div>' +
       logExpenseBlock +
       searchPanelBlock +
       friendsPanelBlock +
@@ -2763,10 +2924,10 @@ function renderMoney(preserveScroll) {
 
   var friendsBlock =
     '<div class="goal-card" style="margin-bottom:14px;">' +
-      '<div class="section-title" style="margin-bottom:8px;">Friends (for splits)</div>' +
+      '<div class="section-title" style="margin-bottom:8px;">'+t('money.friends')+'</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
-        '<input id="friendNameInput" type="text" placeholder="Friend name" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;" onkeydown="if(event.key===\'Enter\')addFriend()">' +
-        '<button onclick="addFriend()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">ADD</button>' +
+        '<input id="friendNameInput" type="text" placeholder="'+t('money.friendName')+'" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 12px;outline:none;" onkeydown="if(event.key===\'Enter\')addFriend()">' +
+        '<button onclick="addFriend()" style="padding:9px 14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">'+t('common.add').toUpperCase()+'</button>' +
       '</div>' +
       ((state.friends && state.friends.length) ?
         '<div style="display:flex;flex-wrap:wrap;gap:6px;">' +
@@ -2777,14 +2938,14 @@ function renderMoney(preserveScroll) {
             '</span>';
           }).join('') +
         '</div>'
-      : '<div style="font-size:11px;color:var(--muted);">Add friends to split bills.</div>') +
+      : '<div style="font-size:11px;color:var(--muted);">'+t('money.addFriendsHint')+'</div>') +
     '</div>';
 
   var html =
     expensesCard +
 
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
-      '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Analysis</div>' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:8px;">'+t('money.analysis')+'</div>' +
       analysisNotes.map(function(n) {
         return '<div style="font-size:12px;color:var(--text);line-height:1.55;padding:6px 0;border-bottom:1px solid var(--border);">• ' + n + '</div>';
       }).join('') +
@@ -2792,15 +2953,15 @@ function renderMoney(preserveScroll) {
 
     '<div class="goal-card" style="margin-bottom:14px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-        '<span style="font-size:13px;font-weight:600;">Budget Overview — ' + dr.label + '</span>' +
+        '<span style="font-size:13px;font-weight:600;">'+t('money.budget', { label: dr.label })+'</span>' +
         '<span style="font-family:var(--mono);font-size:12px;color:' + overallColor + ';">Rs ' + total.toLocaleString('en-IN') + '</span>' +
       '</div>' +
       '<div style="background:var(--border);border-radius:4px;height:6px;margin-bottom:4px;">' +
         '<div style="height:6px;background:' + overallColor + ';border-radius:4px;width:' + overallPct + '%;transition:width .5s;"></div>' +
       '</div>' +
       '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:14px;">' +
-        '<span>Budget: Rs ' + totalBudget.toLocaleString('en-IN') + '</span>' +
-        '<span style="color:' + (remaining < 0 ? '#e05252' : 'var(--success)') + ';">' + (remaining < 0 ? 'Over by Rs ' + Math.abs(remaining).toLocaleString('en-IN') : 'Rs ' + remaining.toLocaleString('en-IN') + ' left') + '</span>' +
+        '<span>'+t('money.budgetLabel')+': Rs ' + totalBudget.toLocaleString('en-IN') + '</span>' +
+        '<span style="color:' + (remaining < 0 ? '#e05252' : 'var(--success)') + ';">' + (remaining < 0 ? t('money.overBy', { n: Math.abs(remaining).toLocaleString('en-IN') }) : 'Rs ' + remaining.toLocaleString('en-IN') + ' '+t('money.left')) + '</span>' +
       '</div>' +
       budgetCats.map(function(c) {
         var spent = getCategoryTotal(rows, c.id);
@@ -2822,7 +2983,7 @@ function renderMoney(preserveScroll) {
 
     '<div class="goal-card" style="margin-bottom:14px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:6px;" onclick="toggleBudgetSettings()">' +
-        '<span style="font-size:13px;font-weight:600;">Monthly Budgets & Tags</span>' +
+        '<span style="font-size:13px;font-weight:600;">'+t('money.monthlyBudgets')+'</span>' +
         '<span id="budgetToggle" style="color:var(--gold);font-size:18px;">+</span>' +
       '</div>' +
       '<div id="budgetSettings" style="display:none;">' +
@@ -2834,17 +2995,17 @@ function renderMoney(preserveScroll) {
               '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:11px;">Rs</span>' +
               '<input id="budget-' + c.id + '" type="number" value="' + b + '" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 8px 8px 28px;outline:none;">' +
             '</div>' +
-            '<button onclick="saveBudget(\'' + c.id + '\')" style="padding:8px 10px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;font-size:11px;cursor:pointer;">Save</button>' +
-            '<button onclick="removeBudgetTag(\'' + c.id + '\')" style="padding:8px 10px;background:transparent;color:#e05252;border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">Remove</button>' +
+            '<button onclick="saveBudget(\'' + c.id + '\')" style="padding:8px 10px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold-mid);border-radius:8px;font-size:11px;cursor:pointer;">'+t('common.save')+'</button>' +
+            '<button onclick="removeBudgetTag(\'' + c.id + '\')" style="padding:8px 10px;background:transparent;color:#e05252;border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;">'+t('common.remove')+'</button>' +
           '</div>';
         }).join('') +
         '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">' +
-          '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Add custom tag + budget</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">'+t('money.addCustomTag')+'</div>' +
           '<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">' +
-            '<input id="customCatEmoji" type="text" placeholder="Emoji" style="width:60px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;text-align:center;">' +
-            '<input id="customCatLabel" type="text" placeholder="Tag name" style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;">' +
-            '<input id="customCatBudget" type="number" placeholder="Budget" style="width:100px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;">' +
-            '<button onclick="addCustomCategory()" style="padding:8px 12px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Add Tag</button>' +
+            '<input id="customCatEmoji" type="text" placeholder="'+t('money.emojiPlaceholder')+'" style="width:60px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;text-align:center;">' +
+            '<input id="customCatLabel" type="text" placeholder="'+t('money.tagName')+'" style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;">' +
+            '<input id="customCatBudget" type="number" placeholder="'+t('money.budgetPlaceholder')+'" style="width:100px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px;outline:none;">' +
+            '<button onclick="addCustomCategory()" style="padding:8px 12px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">'+t('money.addTag')+'</button>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -2885,6 +3046,7 @@ function toggleBudgetSettings() {
 
 function switchTab(id, scrollTargetId){
   closeThemePopover();
+  closeLangPopover();
   if(id==='private'){
     if(!PIN_UNLOCKED){ openPinOverlay(); return; }
     renderPrivate();
@@ -2918,7 +3080,7 @@ function showToast(msg){
 
 function loadRemote() {
   if (!currentUser) return;
-  showSync('Syncing...');
+  showSync(t('auth.syncing'));
   db.collection('users').doc(currentUser.uid).get()
     .then(function(doc) {
       if (doc.exists && doc.data() && doc.data().data) {
@@ -2949,7 +3111,8 @@ function loadRemote() {
         if (!remote.moneyView) remote.moneyView = { range: 'month', search: '', searchOpen: false, friendsOpen: false };
         if (remote.hiddenBudgetTags === undefined) remote.hiddenBudgetTags = local.hiddenBudgetTags || [];
         remote.moneyView = local.moneyView || remote.moneyView || { range: 'month', search: '', searchOpen: false, friendsOpen: false };
-        remote.appearance = local.appearance || remote.appearance || { mode: 'dark', accent: 'gold' };
+        remote.appearance = local.appearance || remote.appearance || { mode: 'dark', accent: 'gold', lang: 'en' };
+        if (!remote.appearance.lang) remote.appearance.lang = (local.appearance && local.appearance.lang) || 'en';
         remote.profileName = remote.profileName || local.profileName || '';
         remote.productiveThreshold = remote.productiveThreshold || local.productiveThreshold || 6;
         remote.yearlyProductiveGoal = remote.yearlyProductiveGoal || local.yearlyProductiveGoal || 300;
@@ -2968,29 +3131,37 @@ function loadRemote() {
         rebuildExpensesFromArchive();
         state = remote;
         applyAppearance();
+        syncLangFromState();
         renderUserDisplay();
         saveState(state);
         renderAll();
+        applyStaticLocale();
+        updateLangBtnIcon();
+        renderLangPopover();
         promptDisplayNameIfNeeded();
         if (currentSection === 'home') goHome();
         else switchTab(currentSection);
-        showSync('Up to date');
+        showSync(t('auth.upToDate'));
       } else {
         saveState(state);
-        showSync('Data uploaded');
+        showSync(t('auth.dataUploaded'));
       }
     })
-    .catch(function(){ showSync('Offline'); });
+    .catch(function(){ showSync(t('auth.offline')); });
 }
 
 function showSync(msg) {
   var el = document.getElementById('syncStatus');
   if (!el) return;
   el.style.display = 'block';
-  el.textContent = (msg === 'Synced' || msg === 'Up to date' || msg === 'Data uploaded')
-    ? 'Synced ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+  var syncedMsg = t('auth.synced');
+  var upMsg = t('auth.upToDate');
+  var uploadMsg = t('auth.dataUploaded');
+  var syncingMsg = t('auth.syncing');
+  el.textContent = (msg === syncedMsg || msg === upMsg || msg === uploadMsg)
+    ? syncedMsg + ' ' + new Date().toLocaleTimeString(getLocaleCode(),{hour:'2-digit',minute:'2-digit'})
     : msg;
-  if (msg !== 'Syncing...') {
+  if (msg !== syncingMsg) {
     setTimeout(function(){ el.style.display = 'none'; }, 3000);
   }
 }
@@ -3000,7 +3171,7 @@ function signIn() {
   provider.setCustomParameters({ prompt: 'select_account' });
   auth.signInWithPopup(provider)
     .then(function(result) {
-      showToast('Signed in!');
+      showToast(t('toast.signedIn'));
     })
     .catch(function(err) {
       showToast('Error: ' + err.code);
@@ -3015,7 +3186,7 @@ function signOut() {
     document.getElementById('loginBtn').style.display = 'block';
     document.getElementById('userBadge').style.display = 'none';
     renderUserDisplay();
-    showToast('Signed out');
+    showToast(t('toast.signedOut'));
   });
 }
 
@@ -3031,7 +3202,7 @@ function requestNotificationPermission() {
   if (Notification.permission === 'default') {
     Notification.requestPermission().then(function(permission) {
       if (permission === 'granted') {
-        showToast('Notifications enabled!');
+        showToast(t('notification.enabled'));
         scheduleReminders();
       }
     });
@@ -3060,27 +3231,27 @@ function scheduleReminders() {
 
     // 7:30 AM — log sleep
     if (h === 7 && m === 30) {
-      sendNotification('Good morning ' + getProfileFirstName() + '!', 'Day ' + daysSinceStart() + ' — log your sleep hours from last night.');
+      sendNotification(t('notification.morningTitle', { name: getProfileFirstName() }), t('notification.morningBody', { n: daysSinceStart() }));
     }
     // 1:00 PM — healthy lunch
     if (h === 13 && m === 0) {
-      sendNotification('Lunch time!', 'No junk, no sugar. Roti + dal + sabzi + salad. You know the plan.');
+      sendNotification(t('notification.lunchTitle'), t('notification.lunchBody'));
     }
     // 6:00 PM — evening run
     if (h === 18 && m === 0) {
-      sendNotification('Evening run time!', 'Get out. 30 mins. Close those fitness rings.');
+      sendNotification(t('notification.runTitle'), t('notification.runBody'));
     }
     // 7:30 PM — healthy dinner
     if (h === 19 && m === 30) {
-      sendNotification('Dinner time!', 'No junk, no sugar. Light and clean. You are building a machine.');
+      sendNotification(t('notification.dinnerTitle'), t('notification.dinnerBody'));
     }
     // 9:00 PM — log day reminder
     if (h === 21 && m === 0 && !entry.ts) {
-      sendNotification('Log your day ' + getProfileFirstName() + '!', doneCount + '/' + CHECKS.length + ' checks done. Fill your diary before you sleep.');
+      sendNotification(t('notification.logDayTitle', { name: getProfileFirstName() }), t('notification.logDayBody', { done: doneCount, total: CHECKS.length }));
     }
     // 10:00 PM — final nudge
     if (h === 22 && m === 0 && doneCount < getProductiveThreshold()) {
-      sendNotification('Still time!', 'Only ' + doneCount + '/' + CHECKS.length + ' checks. Need ' + getProductiveThreshold() + ' for a productive day.');
+      sendNotification(t('notification.stillTimeTitle'), t('notification.stillTimeBody', { done: doneCount, total: CHECKS.length, need: getProductiveThreshold() }));
     }
   }, 60000);
 }
@@ -3102,12 +3273,11 @@ auth.onAuthStateChanged(function(user) {
   }
 });
 
-renderQuote();
 rolloverTodos();
 applyAppearance();
-renderThemePopover();
-renderUserDisplay();
-goHome();
+syncLangFromState();
+applyLocale();
+renderLangPopover();
 requestNotificationPermission();
 document.getElementById('loginBtn').style.display = 'block';
 </script>

@@ -138,6 +138,28 @@
   .diary-input::placeholder{color:var(--muted);}
   .diary-textarea{min-height:96px;resize:vertical;}
   .diary-tip{display:inline-block;margin-left:5px;font-size:12px;color:var(--gold-mid);cursor:help;text-transform:none;letter-spacing:0;vertical-align:middle;line-height:1;}
+  .diary-archive-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+  .diary-archive-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:180px;overflow-y:auto;}
+  .diary-archive-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;transition:border-color 0.2s;}
+  .diary-archive-item:hover{border-color:var(--gold-mid);}
+  .diary-view-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:600;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .diary-view-overlay.hidden{display:none;}
+  .diary-view-modal{background:var(--bg);border:1px solid var(--gold-mid);border-radius:16px;width:min(620px,100%);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.5);}
+  .diary-view-header{padding:20px 22px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .diary-view-title{font-size:20px;font-weight:700;line-height:1.2;}
+  .diary-view-sub{font-family:var(--mono);font-size:12px;color:var(--gold);margin-top:6px;}
+  .diary-view-close{background:none;border:none;color:var(--muted);font-size:28px;line-height:1;cursor:pointer;padding:0 4px;}
+  .diary-view-body{padding:20px 22px;overflow-y:auto;flex:1;}
+  .diary-view-block{margin-bottom:22px;}
+  .diary-view-block:last-child{margin-bottom:0;}
+  .diary-view-q{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;}
+  .diary-view-a{font-size:17px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+  .diary-view-empty{font-size:16px;color:var(--muted);text-align:center;padding:28px 12px;line-height:1.6;}
+  .diary-view-actions{padding:14px 22px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;}
+  .diary-view-actions button{flex:1;min-width:110px;padding:11px 12px;margin:0;}
+  .diary-view-actions button:disabled{opacity:0.35;cursor:not-allowed;}
+  .history-entry-clickable{cursor:pointer;transition:border-color 0.2s;}
+  .history-entry-clickable:hover{border-color:var(--gold-mid);}
 
   .btn-save{width:100%;padding:14px;background:var(--gold);color:#000;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:opacity 0.2s;}
   .btn-save:hover{opacity:0.88;}
@@ -586,6 +608,20 @@ var I18N = {
     'diary.wordPlaceholder': 'e.g. Stoic — enduring pain without complaint',
     'diary.learnedPlaceholder': 'Key insight from today...',
     'diary.missedPlaceholder': 'Be brutally honest...',
+    'diary.viewTitle': 'Diary Entry',
+    'diary.viewDate': 'View',
+    'diary.exportAll': 'Export All',
+    'diary.exportThis': 'Export This Day',
+    'diary.exportHeader': 'Diary Export',
+    'diary.exportDone': 'Diary exported',
+    'diary.noEntriesToExport': 'No diary entries to export',
+    'diary.noPastEntries': 'No past diary entries yet',
+    'diary.noEntryForDate': 'No diary saved for this date',
+    'diary.notAnswered': 'Not filled in',
+    'diary.pastEntries': 'Past entries — tap to read',
+    'diary.prev': 'Previous',
+    'diary.next': 'Next',
+    'history.viewDiaryHint': 'Tap to read full diary',
     'private.title': 'Private Log',
     'private.monthlyOverview': 'Monthly Overview',
     'private.alcohol': 'Alcohol today',
@@ -1006,6 +1042,20 @@ var I18N = {
     'diary.wordPlaceholder': 'जैसे Stoic — बिना शिकायत दर्द सहना',
     'diary.learnedPlaceholder': 'आज की मुख्य सीख...',
     'diary.missedPlaceholder': 'ईमानदार रहो...',
+    'diary.viewTitle': 'डायरी एंट्री',
+    'diary.viewDate': 'देखें',
+    'diary.exportAll': 'सब निर्यात करें',
+    'diary.exportThis': 'यह दिन निर्यात करें',
+    'diary.exportHeader': 'डायरी निर्यात',
+    'diary.exportDone': 'डायरी निर्यात हुई',
+    'diary.noEntriesToExport': 'निर्यात के लिए कोई डायरी नहीं',
+    'diary.noPastEntries': 'अभी कोई पुरानी डायरी नहीं',
+    'diary.noEntryForDate': 'इस तारीख की कोई डायरी नहीं',
+    'diary.notAnswered': 'भरा नहीं',
+    'diary.pastEntries': 'पुरानी एंट्री — पढ़ने के लिए टैप करें',
+    'diary.prev': 'पिछला',
+    'diary.next': 'अगला',
+    'history.viewDiaryHint': 'पूरी डायरी पढ़ने के लिए टैप करें',
     'private.title': 'निजी लॉग',
     'private.monthlyOverview': 'मासिक अवलोकन',
     'private.alcohol': 'आज शराब',
@@ -1426,6 +1476,20 @@ var I18N = {
     'diary.wordPlaceholder': 'jaise Stoic — bina shikayat dard jhelna',
     'diary.learnedPlaceholder': 'Aaj ki main insight...',
     'diary.missedPlaceholder': 'Brutally honest raho...',
+    'diary.viewTitle': 'Diary Entry',
+    'diary.viewDate': 'View',
+    'diary.exportAll': 'Export All',
+    'diary.exportThis': 'Export This Day',
+    'diary.exportHeader': 'Diary Export',
+    'diary.exportDone': 'Diary exported',
+    'diary.noEntriesToExport': 'No diary entries to export',
+    'diary.noPastEntries': 'No past diary entries yet',
+    'diary.noEntryForDate': 'Is date ki koi diary nahi',
+    'diary.notAnswered': 'Bharaa nahi',
+    'diary.pastEntries': 'Purani entries — padhne ke liye tap karo',
+    'diary.prev': 'Previous',
+    'diary.next': 'Next',
+    'history.viewDiaryHint': 'Poori diary padhne ke liye tap karo',
     'private.title': 'Private Log',
     'private.monthlyOverview': 'Monthly Overview',
     'private.alcohol': 'Aaj alcohol',
@@ -1760,6 +1824,26 @@ function getQuote(index) {
     <button onclick="saveSettings()" class="btn-save" style="width:100%;padding:12px;margin-bottom:8px;" data-i18n="settings.save">Save Settings</button>
     <button onclick="signOut()" class="btn-secondary" style="width:100%;margin-top:0;" data-i18n="settings.signOut">Sign Out</button>
     <button onclick="closeSettings()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:11px;cursor:pointer;" data-i18n="settings.close">Close</button>
+  </div>
+</div>
+
+<!-- DIARY VIEW OVERLAY -->
+<div class="diary-view-overlay hidden" id="diaryViewOverlay" onclick="if(event.target===this)closeDiaryView()">
+  <div class="diary-view-modal" role="dialog" aria-modal="true">
+    <div class="diary-view-header">
+      <div>
+        <div class="diary-view-title" id="diaryViewTitle">Diary Entry</div>
+        <div class="diary-view-sub" id="diaryViewDate"></div>
+      </div>
+      <button type="button" class="diary-view-close" onclick="closeDiaryView()" aria-label="Close">&times;</button>
+    </div>
+    <div class="diary-view-body" id="diaryViewBody"></div>
+    <div class="diary-view-actions">
+      <button type="button" class="btn-secondary" id="diaryViewPrev" onclick="navDiaryView(-1)">Previous</button>
+      <button type="button" class="btn-secondary" id="diaryViewNext" onclick="navDiaryView(1)">Next</button>
+      <button type="button" class="btn-secondary" id="diaryViewExportBtn" onclick="exportSingleDiary()">Export This Day</button>
+      <button type="button" class="btn-save" onclick="closeDiaryView()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -2102,6 +2186,8 @@ function applyLocale() {
   renderFrontMoney();
   if (currentSection === 'home') goHome();
   else switchTab(currentSection);
+  var diaryOv = document.getElementById('diaryViewOverlay');
+  if (diaryOv && diaryOv.className.indexOf('hidden') === -1) renderDiaryViewPopup();
 }
 
 var langPopoverOpen = false;
@@ -2501,6 +2587,13 @@ function renderPrivate() {
         '<div class="diary-field"><label class="diary-label">&#10060; '+t('diary.missed')+'</label><textarea class="diary-input diary-textarea" id="d-missed" rows="4" placeholder="'+t('diary.missedPlaceholder')+'"></textarea></div>' +
       '</div>' +
       '<button class="btn-save" id="saveDiaryBtn" onclick="saveDiary()" style="margin-top:0;">'+t('diary.save')+'</button>' +
+      '<div class="diary-archive-row">' +
+        '<input type="date" id="diaryBrowseDate" class="diary-input" style="flex:1;min-width:140px;" max="'+today+'" value="'+today+'">' +
+        '<button type="button" onclick="viewDiaryByDateInput()" class="btn-secondary" style="width:auto;padding:10px 14px;margin:0;">'+t('diary.viewDate')+'</button>' +
+        '<button type="button" onclick="exportDiaries()" class="btn-secondary" style="width:auto;padding:10px 14px;margin:0;">'+t('diary.exportAll')+'</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:12px;margin-bottom:6px;">'+t('diary.pastEntries')+'</div>' +
+      '<div class="diary-archive-list">'+renderDiaryArchiveListHtml()+'</div>' +
     '</div>' +
     '<div class="goal-card" style="margin-bottom:14px;border-color:var(--gold-mid);">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
@@ -2573,6 +2666,190 @@ function loadDiaryForm() {
   var btn = document.getElementById('saveDiaryBtn');
   if (btn) btn.textContent = entry.ts ? t('diary.update') : t('diary.save');
 }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;');
+}
+
+function hasDiaryContent(d) {
+  if (!d) return false;
+  return !!(d.word || d.learned || d.missed || d.plan);
+}
+
+function getDiaryDates() {
+  return Object.keys(state.days).filter(function(k) {
+    var e = state.days[k];
+    return hasDiaryContent(e && e.diary);
+  }).sort(function(a, b) { return b.localeCompare(a); });
+}
+
+function formatDiaryDateKey(key) {
+  var date = new Date(key + 'T00:00:00');
+  return date.toLocaleDateString(getLocaleCode(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatDiaryDateShort(key) {
+  var date = new Date(key + 'T00:00:00');
+  return date.toLocaleDateString(getLocaleCode(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+var diaryViewKey = null;
+var diaryViewDates = [];
+
+function renderDiaryArchiveListHtml() {
+  var dates = getDiaryDates().slice(0, 30);
+  if (!dates.length) return '<div style="font-size:12px;color:var(--muted);padding:4px 0;">'+t('diary.noPastEntries')+'</div>';
+  return dates.map(function(k) {
+    var d = state.days[k].diary || {};
+    var preview = d.word || d.learned || d.missed || d.plan || '';
+    if (preview.length > 60) preview = preview.substring(0, 60) + '\u2026';
+    return '<div class="diary-archive-item" onclick="openDiaryView(\''+k+'\')">' +
+      '<span style="font-family:var(--mono);color:var(--gold);flex-shrink:0;">'+formatDiaryDateShort(k)+'</span>' +
+      '<span style="color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(preview)+'</span>' +
+    '</div>';
+  }).join('');
+}
+
+function openDiaryView(dateKey) {
+  diaryViewDates = getDiaryDates();
+  diaryViewKey = dateKey || todayKey();
+  renderDiaryViewPopup();
+  var ov = document.getElementById('diaryViewOverlay');
+  if (ov) ov.className = 'diary-view-overlay';
+}
+
+function closeDiaryView() {
+  var ov = document.getElementById('diaryViewOverlay');
+  if (ov) ov.className = 'diary-view-overlay hidden';
+}
+
+function navDiaryView(dir) {
+  if (!diaryViewDates.length) return;
+  var idx = diaryViewDates.indexOf(diaryViewKey);
+  if (idx < 0) idx = 0;
+  idx += dir;
+  if (idx < 0 || idx >= diaryViewDates.length) return;
+  diaryViewKey = diaryViewDates[idx];
+  renderDiaryViewPopup();
+}
+
+function renderDiaryViewPopup() {
+  var entry = state.days[diaryViewKey];
+  var d = (entry && entry.diary) ? entry.diary : {};
+  var titleEl = document.getElementById('diaryViewTitle');
+  var dateEl = document.getElementById('diaryViewDate');
+  var bodyEl = document.getElementById('diaryViewBody');
+  if (titleEl) titleEl.textContent = t('diary.viewTitle');
+  if (dateEl) dateEl.textContent = formatDiaryDateKey(diaryViewKey);
+  var fields = [
+    { key: 'word', label: t('diary.wordOfDay'), emoji: '\uD83D\uDCD6' },
+    { key: 'learned', label: t('diary.learned'), emoji: '\uD83D\uDCA1' },
+    { key: 'missed', label: t('diary.missed'), emoji: '\u274C' }
+  ];
+  if (d.plan) fields.push({ key: 'plan', label: 'Plan', emoji: '\uD83D\uDCC5' });
+  var html = '';
+  if (!hasDiaryContent(d)) {
+    html = '<div class="diary-view-empty">'+escapeHtml(t('diary.noEntryForDate'))+'</div>';
+  } else {
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      var val = d[f.key] || '';
+      if (!val && f.key === 'plan') continue;
+      html += '<div class="diary-view-block">' +
+        '<div class="diary-view-q">'+f.emoji+' '+escapeHtml(f.label)+'</div>' +
+        '<div class="diary-view-a">'+(val ? escapeHtml(val) : '<span style="color:var(--muted);font-style:italic;">'+escapeHtml(t('diary.notAnswered'))+'</span>')+'</div>' +
+      '</div>';
+    }
+  }
+  if (bodyEl) bodyEl.innerHTML = html;
+  var idx = diaryViewDates.indexOf(diaryViewKey);
+  var prevBtn = document.getElementById('diaryViewPrev');
+  var nextBtn = document.getElementById('diaryViewNext');
+  var exportBtn = document.getElementById('diaryViewExportBtn');
+  if (prevBtn) {
+    prevBtn.textContent = t('diary.prev');
+    prevBtn.disabled = idx <= 0;
+  }
+  if (nextBtn) {
+    nextBtn.textContent = t('diary.next');
+    nextBtn.disabled = idx < 0 || idx >= diaryViewDates.length - 1;
+  }
+  if (exportBtn) exportBtn.textContent = t('diary.exportThis');
+  var closeBtn = document.querySelector('#diaryViewOverlay .btn-save');
+  if (closeBtn) closeBtn.textContent = t('common.close');
+}
+
+function viewDiaryByDateInput() {
+  var inp = document.getElementById('diaryBrowseDate');
+  if (!inp || !inp.value) return;
+  openDiaryView(inp.value);
+}
+
+function formatDiaryExportBlock(dateKey) {
+  var entry = state.days[dateKey];
+  var d = (entry && entry.diary) ? entry.diary : {};
+  var lines = [formatDiaryDateKey(dateKey), ''];
+  lines.push(t('diary.wordOfDay') + ':');
+  lines.push(d.word || '\u2014');
+  lines.push('');
+  lines.push(t('diary.learned') + ':');
+  lines.push(d.learned || '\u2014');
+  lines.push('');
+  lines.push(t('diary.missed') + ':');
+  lines.push(d.missed || '\u2014');
+  if (d.plan) {
+    lines.push('');
+    lines.push('Plan:');
+    lines.push(d.plan);
+  }
+  return lines.join('\n');
+}
+
+function downloadTextFile(filename, content) {
+  var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportDiaries() {
+  var dates = getDiaryDates();
+  if (!dates.length) {
+    showToast(t('diary.noEntriesToExport'));
+    return;
+  }
+  var lines = [];
+  var name = state.profileName || 'Diary';
+  lines.push(name + ' \u2014 ' + t('diary.exportHeader'));
+  lines.push('');
+  for (var i = 0; i < dates.length; i++) {
+    lines.push(formatDiaryExportBlock(dates[i]));
+    if (i < dates.length - 1) {
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+  }
+  downloadTextFile('diary-export-' + todayKey() + '.txt', lines.join('\n'));
+  showToast(t('diary.exportDone'));
+}
+
+function exportSingleDiary() {
+  if (!diaryViewKey) return;
+  if (!hasDiaryContent((state.days[diaryViewKey] && state.days[diaryViewKey].diary) || {})) {
+    showToast(t('diary.noEntryForDate'));
+    return;
+  }
+  downloadTextFile('diary-' + diaryViewKey + '.txt', formatDiaryExportBlock(diaryViewKey));
+  showToast(t('diary.exportDone'));
+}
+
 function adjAlcohol(d) { adjPriv('alcohol', d); }
 function adjFap(d)     { adjPriv('fap', d); }
 
@@ -3279,8 +3556,9 @@ function renderHistory(){
     var dateStr=date.toLocaleDateString(getLocaleCode(),{weekday:'short',day:'numeric',month:'short'});
     var doneChecks=CHECKS.filter(function(c){return entry.checks&&entry.checks[c.id];});
     var d=entry.diary||{}, prod=isProductive(entry);
-    return '<div class="history-entry">'+
-      '<div class="history-date">'+dateStr+(prod?' 🏆':'')+'</div>'+
+    var hasDiary=hasDiaryContent(d);
+    return '<div class="history-entry'+(hasDiary?' history-entry-clickable':'')+'"'+(hasDiary?' onclick="openDiaryView(\''+key+'\')"':'')+'>'+
+      '<div class="history-date">'+dateStr+(prod?' 🏆':'')+(hasDiary?' <span style="color:var(--muted);font-size:9px;">· '+t('history.viewDiaryHint')+'</span>':'')+'</div>'+
       '<div class="history-checks">'+
         doneChecks.map(function(c){var ct=getCheckTexts(c.id);return '<span class="history-chip">'+c.emoji+' '+ct.name+'</span>';}).join('')+
         (doneChecks.length?'':'<span style="font-size:10px;color:var(--muted)">'+t('history.noChecks')+'</span>')+
